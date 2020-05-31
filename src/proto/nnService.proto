@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package proto;
+
+message BoardRequest {
+    repeated int32 board = 1;
+}
+
+message NNResponse {
+  double result = 1;
+}
+
+service AddService {
+  rpc ForwardPass(BoardRequest) returns (NNResponse);
+}
