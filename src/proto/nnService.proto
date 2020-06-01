@@ -7,7 +7,7 @@ message BoardRequest {
 }
 
 message NNResponse {
-  double result = 1;
+  repeated double result = 1;
 }
 
 service AddService {

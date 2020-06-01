@@ -26,8 +26,9 @@ func main() {
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 	}
-
-	fmt.Printf(" Response %d", int(response.Result))
+	for _, i := range response.Result {
+		fmt.Printf(" Response %f\n", float32(i))
+	}
 
 	/*
 
