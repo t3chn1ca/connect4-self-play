@@ -218,8 +218,8 @@ func (b Connect4) GetBoardFlatInt32() []int32 {
 
 /* Returns Int64 board for use with Big.Int */
 func (b Connect4) GetBoardFlat() []int64 {
-	fmt.Println("%v", b.GetBoard())
-	fmt.Println("%v", flatten(b.GetBoard()))
+	//fmt.Println("%v", b.GetBoard())
+	//fmt.Println("%v", flatten(b.GetBoard()))
 	return flatten(b.GetBoard())
 }
 
@@ -267,6 +267,14 @@ func (b *Connect4) PlayMove(x int) int {
 
 /* DEBUGS */
 func (b Connect4) PlayerToString(player int64) string {
+	if player == PLAYER_1 {
+		return "PLAYER_1(x)"
+	} else {
+		return "PLAYER_2(o)"
+	}
+}
+
+func PlayerToString(player int64) string {
 	if player == PLAYER_1 {
 		return "PLAYER_1(x)"
 	} else {
