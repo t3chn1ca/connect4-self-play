@@ -12,7 +12,7 @@ func main() {
 	//pi := [7]float64{0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.4}
 	sample.Pi = [7]float64{0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.4}
 	sample.Z = 1
-	sample.P = [7]float64{0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.4}
+	sample.P = []float32{0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.4}
 	sample.V = -0.77
 
 	var db db.Database

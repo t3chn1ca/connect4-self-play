@@ -16,6 +16,8 @@ const T = 0.5001 // Control exploration with temp, T -> 0 no exploration, T->1 r
 const MAX_CHILD_NODES = 7
 
 //Node : MonteCarlo tree node
+// Node is seen from the perspective of the PLAYER who is going to move from this node
+// Z & v are from the perspective of the player who is in this node(state) and about to make move
 type Node struct {
 	parent        *Node
 	boardIndex    big.Int
@@ -93,7 +95,7 @@ func (node *Node) getChildNodes() []*Node {
 func (node *Node) getUbc() float32 {
 	//Exploration term is high for less visited nodes
 	//If child has been visited relatively less times than other children the exploration term for child goes up
-	var explorationTerm = float32(C) * node.p / (1 + float32(node.VisitCount))
+	var explorationTerm = float32(C) * node.p * float32(math.Sqrt(float64(node.parent.VisitCount))) / (1 + float32(node.VisitCount))
 	//fmt.Printf("UBC = %f + %f = %f \n", node.getValue(), float32(explorationTerm), (node.getValue() + float32(explorationTerm)))
 	return (node.Q + (float32(explorationTerm)))
 }
@@ -134,6 +136,23 @@ func (node *Node) getUnplayedMoves() []int {
 	return node.unplayedMoves
 }
 
+//Propablity of all child actions from this node, returned by NN
+func (node *Node) GetP() []float32 {
+	return node.propActionChildNodes
+}
+
+func (node *Node) GetBoardIndex() big.Int {
+	return node.boardIndex
+}
+
+func (node *Node) GetPlayerJustMoved() int64 {
+	return node.playerJustMoved
+}
+
+func (node *Node) GetV() float32 {
+	return node.v
+}
+
 func (node *Node) ToString() string {
 	out := fmt.Sprintf("%p :Action:%d, BoardIndex:%s len(childNodes):%d unplayedMvs:%d playerJustMvd:%s v: %f visitCount: %d Q: %f UBC=%f\n", node, node.action,
 		node.boardIndex.String(), len(node.ChildNodes), node.unplayedMoves, PlayerToString(node.playerJustMoved), node.v, node.VisitCount, node.Q, node.getUbc())
@@ -172,12 +191,11 @@ func (node *Node) GetAction() int {
 	return node.action
 }
 
-/*
- * TODO:
-	1. Design interaction of MCTS with NN ( use twirp )
-	2. Design experience generation
+//Return parent of node
+func (node *Node) GetParent() *Node {
+	return node.parent
+}
 
-*/
 func MonteCarloTreeSearch(game *Connect4, max_iteration int, root *Node, debug bool) *Node {
 
 	boardIndex := game.GetBoardIndex()
@@ -222,15 +240,7 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, root *Node, debug b
 			unplayedMoves := node.getUnplayedMoves()
 
 			move := unplayedMoves[rand.Intn(len(unplayedMoves))]
-			//DEBUG: Remove and revert to random
-			/*
-				minMove := -1
-				for i, e := range unplayedMoves {
-					if i == 0 || e < minMove {
-						minMove = e
-					}
-				}
-				move := minMove*/
+
 			gameTemp.PlayMove(move)
 
 			//Collect state information for new child node creation
@@ -249,18 +259,7 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, root *Node, debug b
 
 		}
 
-		//Rollout : Play the complete game from the child node just created, without making any new child nodes ( counter intutive)
-
-		//fmt.Println("****Rollout****")
-		/*
-			for !gameTemp.IsGameOver() {
-				playableMoves := gameTemp.GetValidMoves()
-				move := playableMoves[rand.Intn(len(playableMoves))]
-				gameTemp.PlayMove(move)
-			}
-		*/
-
-		//Backpropagate : We should be in a terminal state when we get here
+		//Backpropagate : We should be in a terminal state when we get here in traditional MCTS, but not in alpha algo
 		//fmt.Println("****Backpropagate****")
 
 		//var tempNode *Node
