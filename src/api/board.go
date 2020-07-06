@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"math/big"
+	"math/rand"
 )
 
 const (
@@ -34,10 +35,14 @@ type Connect4 struct {
 	reward            [2]int //one for each player
 }
 
+var RandomNumGenerator *rand.Rand
+
 func NewConnect4() *Connect4 {
 	connect4 := new(Connect4)
 	connect4.nextPlayerToMove = PLAYER_1
 	connect4.gameOver = false
+	source := rand.NewSource(Seed_for_rand)
+	RandomNumGenerator = rand.New(source)
 	fmt.Println("Initializing connect4")
 	return connect4
 }
@@ -51,10 +56,6 @@ func (b *Connect4) ResetBoard() {
 	b.playerMadeBadMove = false
 	b.nextPlayerToMove = PLAYER_1
 	b.DumpBoard()
-}
-
-func (b Connect4) GetReward() [2]int {
-	return b.reward
 }
 
 func (b Connect4) IsDone() bool {
@@ -237,6 +238,22 @@ func (b Connect4) GetBoard() [maxY][maxX]int64 {
 		}
 	}
 	return boardForIndexFormat // Return board in format ready for easy convertion to ternary
+}
+
+func (b Connect4) GetPlayerMadeBadMove() bool {
+	return b.playerMadeBadMove
+}
+
+func (b Connect4) GetNextPlayerToMove() int64 {
+	return b.nextPlayerToMove
+}
+
+func (b Connect4) GetGameOver() bool {
+	return b.gameOver
+}
+
+func (b Connect4) GetReward() [2]int {
+	return b.reward
 }
 
 //Get position information

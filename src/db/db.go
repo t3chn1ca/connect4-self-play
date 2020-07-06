@@ -28,11 +28,24 @@ type TrainingSample struct {
 	V  float32    // NN value
 }
 
+func (db *Database) GetLastUid() int32 {
+	sql_str := fmt.Sprintf("SELECT uid from training ORDER BY uid DESC limit 1")
+	fmt.Printf(" SQL : %s\n", sql_str)
+	rows, err := db.conn.Query(sql_str)
+	checkErr(err)
+
+	var uid int32
+	for rows.Next() {
+		rows.Scan(&uid)
+	}
+	return uid
+}
+
 // At end of game update all Z values for this iteration from ENDGAME result
 func (db *Database) UpdateWinner(iteration int, playerWon string) {
 	//Update Z for winner
 	sql_str := fmt.Sprintf("UPDATE training SET z = 1 WHERE playerToMove = '%s' AND iteration = %d", playerWon, iteration)
-	fmt.Printf(" SQL : %s\n", sql_str)
+	//fmt.Printf(" SQL : %s\n", sql_str)
 	stmt, err := db.conn.Prepare(sql_str)
 	checkErr(err)
 
@@ -41,7 +54,7 @@ func (db *Database) UpdateWinner(iteration int, playerWon string) {
 
 	//Update Z for looser
 	sql_str = fmt.Sprintf("UPDATE training SET z = -1 WHERE playerToMove != '%s' AND iteration = %d", playerWon, iteration)
-	fmt.Printf(" SQL : %s\n", sql_str)
+	//fmt.Printf(" SQL : %s\n", sql_str)
 	stmt, err = db.conn.Prepare(sql_str)
 	checkErr(err)
 
@@ -76,7 +89,7 @@ func (db Database) Insert(boardIndex big.Int, iteration int, sample TrainingSamp
 	checkErr(err)
 	//Insert Z = 0 and other parameters
 	sql_str := fmt.Sprintf("INSERT INTO training(boardIndex, playerToMove, created, iteration, json, z) values('%s', '%s', '%s', %d, '%s', 0)", boardIndex.String(), playerToMove, now.String(), iteration, jsonString)
-	fmt.Printf(" SQL : %s\n", sql_str)
+	//fmt.Printf(" SQL : %s\n", sql_str)
 	stmt, err := db.conn.Prepare(sql_str)
 	checkErr(err)
 

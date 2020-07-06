@@ -1,14 +1,5 @@
 package api
 
-import (
-	"bufio"
-	"fmt"
-	"net/http"
-	"os"
-	"strconv"
-	"strings"
-)
-
 const START_GAME = -1
 
 type Game int
@@ -28,6 +19,7 @@ type ArgRet struct {
 	Board     [maxY][maxX]int64
 }
 
+/*
 func (g Game) InitAllStates(r *http.Request, argIn *ArgIn, result *ArgRet) error {
 	fmt.Println("==============Initializing all states======================")
 	return nil
@@ -39,7 +31,7 @@ func (g *Game) ResetBoard(r *http.Request, argIn *ArgIn, result *ArgRet) error {
 	return nil
 }
 
-/*PlayMove API to play a move by any player */
+//PlayMove API to play a move by any player
 func (g *Game) PlayMove(r *http.Request, argIn *ArgIn, result *ArgRet) error {
 	//fmt.Printf("PlayMove: \n")
 	//fmt.Printf("In client: playing move %d\n", argIn.X)
@@ -53,7 +45,7 @@ func (g *Game) PlayMove(r *http.Request, argIn *ArgIn, result *ArgRet) error {
 	return nil
 }
 
-/* API to read input from command line from server for Player 1 */
+// API to read input from command line from server for Player 1
 func (g *Game) GetMovePlayer(r *http.Request, argIn *ArgIn, result *ArgRet) error {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("Enter move: ")
@@ -88,3 +80,4 @@ func calculateReward(status int) int {
 	}
 	return reward
 }
+*/

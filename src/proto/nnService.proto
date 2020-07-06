@@ -6,10 +6,19 @@ message BoardRequest {
     repeated int32 board = 1;
 }
 
+message TrainFromIndex {
+  int32 uid = 1;
+}
+
+message TrainingStatus {
+  int32 status = 1;
+}
+
 message NNResponse {
   repeated double result = 1;
 }
 
 service AddService {
   rpc ForwardPass(BoardRequest) returns (NNResponse);
+  rpc Train(TrainFromIndex) returns (TrainingStatus);
 }
