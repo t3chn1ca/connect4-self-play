@@ -101,14 +101,21 @@ func (node *Node) update(reward int) {
 		node.draws++
 	}
 	if reward == -2 {
-		//Dont do anything for loss
 		node.wins--
 	}
 }
 
+func PlayerToString(player int64) string {
+	if player == PLAYER_1 {
+		return "PLAYER_1(x)"
+	} else {
+		return "PLAYER_2(o)"
+	}
+}
+
 func (node *Node) toString() string {
-	out := fmt.Sprintf("%p :Action:%d, BoardIndex:%s len(childNodes):%d unplayedMvs:%d playerJustMvd:%d W+D/V: %d/%d =%f \n", node, node.action,
-		node.boardIndex.String(), len(node.ChildNodes), node.unplayedMoves, node.playerJustMoved, node.wins+node.draws, node.VisitCount, float32(node.wins+node.draws)/float32(node.VisitCount))
+	out := fmt.Sprintf("%p :Action:%d, BoardIndex:%s len(childNodes):%d unplayedMvs:%d playerJstMoved:%s W+D/V: %d/%d =%f \n", node, node.action,
+		node.boardIndex.String(), len(node.ChildNodes), node.unplayedMoves, PlayerToString(node.playerJustMoved), node.wins+node.draws, node.VisitCount, float32(node.wins+node.draws)/float32(node.VisitCount))
 	/*  Print parent and child
 	out += fmt.Sprintf("Parent: %p\n", node.parent)
 	for i := 0; i < len(node.ChildNodes); i++ {
@@ -177,6 +184,7 @@ func MctsForwardPass(game *Connect4) NNOut {
 	var nnOut NNOut
 
 	parentNode := selectedNode.parent
+	//The value of this board position is wrt to the player who played to get here
 	nnOut.Value = parentNode.getValue()
 	boardIndex := game.GetBoardIndex()
 	fmt.Printf("MCTS boardIndex = %s\n", boardIndex.String())
@@ -274,10 +282,13 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, root *Node, debug b
 		rewards := gameTemp.GetReward()
 		for node != nil {
 			playerJustMoved := node.playerJustMoved
+
 			//fmt.Printf("Player just moved: %s\n", gameTemp.PlayerToString(playerJustMoved))
 			playerJustMoveIndex := GetPlayerIndex(playerJustMoved)
+
 			//fmt.Printf("---Backpropagate---\n %s reward: %d\n", node.toString(), rewards[playerJustMoveIndex])
 			//fmt.Printf("Dump current Node before: %s\n", node.toString())
+
 			node.update(rewards[playerJustMoveIndex])
 			//fmt.Printf("Dump current Node after -update-: %s\n", node.toString())
 			//fmt.Printf("--------------------------------\n")
@@ -285,14 +296,14 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, root *Node, debug b
 			node = node.parent
 		}
 		//fmt.Printf("Root ptr: %p\n", root)
-		if debug {
-			fmt.Printf(DumpTree(root, 0))
-		}
+
 		/*	fmt.Printf("Temp Node %p", tempNode)
 			fmt.Printf("Root Node %p", root)
 			fmt.Println(root.TreeToString(0))*/
 	}
-
+	if debug {
+		fmt.Printf(DumpTree(root, 0))
+	}
 	sort.SliceStable(root.ChildNodes, func(i, j int) bool {
 		return root.ChildNodes[i].VisitCount < root.ChildNodes[j].VisitCount
 	})

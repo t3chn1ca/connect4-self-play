@@ -9,7 +9,7 @@ import (
 	"sort"
 )
 
-var C = 4 //math.Sqrt(2.0) // ref:https://medium.com/oracledevs/lessons-from-alphazero-part-3-parameter-tweaking-4dceb78ed1e5  //math.Sqrt(2.0)
+var C = 5 //math.Sqrt(2.0) // ref:https://medium.com/oracledevs/lessons-from-alphazero-part-3-parameter-tweaking-4dceb78ed1e5  //math.Sqrt(2.0)
 
 const T = 0.99 //0.5001 // Control exploration with temp, T -> 0 no exploration, T->1 reflects a propablity based on visits
 const MAX_CHILD_NODES = 7
@@ -103,16 +103,22 @@ Pi out is softmax, ie all values sum to 1
 
 Pi[7] , where index is action
 */
-func (node *Node) GetPi() [MAX_CHILD_NODES]float64 {
+func (node *Node) GetPi(printDebug bool) [MAX_CHILD_NODES]float64 {
 	var pi [MAX_CHILD_NODES]float64
-	fmt.Printf("Go Zero boardIndex = %s\n", node.boardIndex.String())
-	fmt.Println("==========Go Zero============\n")
-	for _, childNode := range node.ChildNodes {
-		fmt.Printf("ChildNode action: %d visit: %d, Parent node visit: %d\n", childNode.action, childNode.VisitCount, node.VisitCount)
-		pi[childNode.action] = math.Pow(float64(childNode.VisitCount), T) / math.Pow(float64(node.VisitCount), T)
-		fmt.Printf("Pi[%d] = %f\n", childNode.action, pi[childNode.action])
+	if printDebug == true {
+		fmt.Printf("Go Zero boardIndex = %s\n", node.boardIndex.String())
+		fmt.Printf("==========Go Zero==ToPlay: %s==========\n", PlayerToString(node.playerJustMoved*-1))
 	}
-	fmt.Printf("Pi  = %v\n", pi)
+	for _, childNode := range node.ChildNodes {
+		pi[childNode.action] = math.Pow(float64(childNode.VisitCount), T) / math.Pow(float64(node.VisitCount), T)
+		if printDebug == true {
+			fmt.Printf("ChildNode action: %d visit: %d (PC:%f), Parent node visit: %d\n", childNode.action, childNode.VisitCount, float32(100.0*childNode.VisitCount/node.VisitCount), node.VisitCount)
+			fmt.Printf("Pi[%d] = %f\n", childNode.action, pi[childNode.action])
+		}
+	}
+	if printDebug == true {
+		fmt.Printf("Pi  = %v\n", pi)
+	}
 	return pi
 }
 
@@ -228,7 +234,7 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, root *Node, debug b
 	boardIndex := game.GetBoardIndex()
 	fmt.Printf("\nMCTSNN root node index = %s\n", boardIndex.String())
 	var rootNode Node
-	var mctsGame *mcts.Connect4
+	//var mctsGame *mcts.Connect4
 
 	//First time MCT is created if root == nil
 	if root == nil {
@@ -236,12 +242,12 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, root *Node, debug b
 		unplayedMoves := game.GetValidMoves()
 		root = &rootNode
 		fmt.Printf("Creating ROOT node playerJustMoved: %s, unplayedMoves %v", game.PlayerToString(playerWhoJustMoved), unplayedMoves)
-		//nnOut := nnForwardPass(game)
-		mctsGame = CloneGame(game)
-		nnOut := mcts.MctsForwardPass(mctsGame)
-		root.init(playerWhoJustMoved, nil, boardIndex, 0, unplayedMoves, 0, nnOut.P, nnOut.Value)
+		nnOut := nnForwardPass(game)
+		//mctsGame = CloneGame(game)
+		//nnOut := mcts.MctsForwardPass(mctsGame)
+		root.init(playerWhoJustMoved, nil, boardIndex, 0, unplayedMoves, 0, nnOut.p, nnOut.value)
 		root.VisitCount = 0 //Visit counts are updated in update(), it comes all the way to root
-		root.vTotal = nnOut.Value
+		root.vTotal = nnOut.value
 		if debug {
 			fmt.Printf(DumpTree(root, 0))
 		}
@@ -250,7 +256,7 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, root *Node, debug b
 
 	//fmt.Printf("-------->Root node = %p", root)
 	for i := 0; i < max_iteration; i++ {
-		fmt.Printf("\n\nMCTSNN Iteration: %d ======================================================\n", i)
+		//fmt.Printf("\n\nMCTSNN Iteration: %d ======================================================\n", i)
 		node = root
 		//fmt.Printf("-------->Root node = %p\n", root)
 		//Make a copy of the gamestate
@@ -259,7 +265,7 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, root *Node, debug b
 		gameTemp = *game
 
 		//Select, if all possible moves have been played, ie all possible child nodes are created
-		fmt.Println("****Select****")
+		//fmt.Println("****Select****")
 		for len(node.getUnplayedMoves()) == 0 && len(node.ChildNodes) != 0 {
 			node = node.selectChildByUCT()
 			//fmt.Printf("Selected node: %s\n", node.ToString())
@@ -267,7 +273,7 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, root *Node, debug b
 		}
 
 		//#Expand
-		fmt.Printf("****Expand**** Game OVER: %t\n", gameTemp.IsGameOver())
+		//fmt.Printf("****Expand**** Game OVER: %t\n", gameTemp.IsGameOver())
 		if len(node.getUnplayedMoves()) > 0 && gameTemp.IsGameOver() != true {
 			unplayedMoves := node.getUnplayedMoves()
 
@@ -281,23 +287,39 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, root *Node, debug b
 				playerJustMoved := gameTemp.GetPlayerWhoJustMoved()
 				boardIndex = gameTemp.GetBoardIndex()
 				validMoves := gameTemp.GetValidMoves()
-				fmt.Printf("EXP: action: %d PARENT of the child to be added %p\n", move, node)
+				//fmt.Printf("EXP: action: %d PARENT of the child to be added %p\n", move, node)
 
-				//nnOut := nnForwardPass(&gameTemp)
-				mctsGame = CloneGame(&gameTemp)
-				nnOut := mcts.MctsForwardPass(mctsGame)
+				nnOut := nnForwardPass(&gameTemp)
+				//mctsGame = CloneGame(&gameTemp)
+				//nnOut := mcts.MctsForwardPass(mctsGame)
 				//fmt.Printf("EXP: Adding Child node playerJustMoved: %s, move: %d, unplayedMoves %v Value = %f\n", game.PlayerToString(playerJustMoved), move, validMoves, nnOut.value)
-				tempNode := node.addChild(playerJustMoved, boardIndex, move, validMoves, node.propActionChildNodes[move], nnOut.P, nnOut.Value)
+				tempNode := node.addChild(playerJustMoved, boardIndex, move, validMoves, node.propActionChildNodes[move], nnOut.p, nnOut.value)
 				//fmt.Printf("EXP: value of child")
 				//fmt.Printf("Dump parent node: %s\n", node.ToString())
 				node = tempNode
 				//fmt.Printf("Dump child node: %s\n", node.ToString())
+			} else { //If game is terminated create a node to capture that state
+				//Collect state information for new child node creation
+				playerJustMoved := gameTemp.GetPlayerWhoJustMoved()
+				boardIndex = gameTemp.GetBoardIndex()
+				var emptyMovesArray []int
+				var zeroPropablityArray []float32
+				validMoves := emptyMovesArray
+				//fmt.Printf("EXP: action: %d PARENT of the child to be added %p\n", move, node)
+				var value float32
+				reward := gameTemp.GetReward()
+				playerJustMoveIndex := GetPlayerIndex(playerJustMoved)
+				//Reward is -2 or 2 for wins and 1 for draw, In MCTS it should be between -1 & 1, 0.5 for draw
+				value = float32(reward[playerJustMoveIndex]) / 2
+
+				tempNode := node.addChild(playerJustMoved, boardIndex, move, validMoves, node.propActionChildNodes[move], zeroPropablityArray, value)
+				node = tempNode
 			}
 
 		}
 
 		//Backpropagate : We should be in a terminal state when we get here in traditional MCTS, but not in alpha algo
-		fmt.Println("****Backpropagate****")
+		//fmt.Println("****Backpropagate****")
 
 		rewards := []float32{0, 0} //Player who just moved
 		playerJustMoveIndex := GetPlayerIndex(node.playerJustMoved)
@@ -328,8 +350,8 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, root *Node, debug b
 	})
 
 	//fmt.Printf("Selected move for %s = %d\n", game.PlayerToString(game.GetPlayerToMove()), root.ChildNodes[len(root.ChildNodes)-1].action)
-	pi := root.GetPi()
-	fmt.Printf("Pis : %v\n", pi)
+	pi := root.GetPi(true)
+	//fmt.Printf("Pis : %v\n", pi)
 
 	//TODO: Sampled move might not exist as a child node, As even 0 (e^0 = 1) values result in positive propablity with softmax
 	//Softmax might not be a good idea for picking moves from pi, need a function which returns zero for zero pi values,
@@ -362,7 +384,7 @@ func propablisticSampleFromArray(in [MAX_CHILD_NODES]float64) int {
 
 	randFloat := RandomNumGenerator.Float64()
 	pick := randFloat * sum(in)
-	fmt.Printf("Pick = %f\n", pick)
+	//fmt.Printf("Pick = %f\n", pick)
 	sum := 0.0
 	for index, value := range in {
 		sum += value
@@ -370,7 +392,7 @@ func propablisticSampleFromArray(in [MAX_CHILD_NODES]float64) int {
 			return index
 		}
 	}
-
+	//The pick is the last node of the list
 	return MAX_CHILD_NODES - 1
 
 }

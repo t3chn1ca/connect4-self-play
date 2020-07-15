@@ -16,7 +16,7 @@ import (
    1. Add dritchlet noise to make more explorations, make every game in the different iterations different
    2. Draws are not captured, fix that to update both winners in case of draw
    3. MCTS results and selfplay results dont tally, where it should
-   4. Value returned from MCTS is not correct, First board is a sure loose but returns 0.74??
+   4. Value returned from MCTS is not correct, First board is a sure loose but returns 0.74?? <= Fixed
 
    FIXED:
    1 z for player after first move is 0, it should be the end state of that game //Not seen now
@@ -58,18 +58,20 @@ func main() {
 	for iteration := 0; iteration < 1; iteration++ {
 
 		var game = api.NewConnect4()
-		/*      V V
-		   	- - - - - - -
-		   	- - - o - - -
-		   	x - - o o - x
-		   	o o x o x - x
-		   	o o o x x - o
-		   	o x x x o x x
-		-----------------------------------
-			0 1 2 3 4 5 6
-			ANS: 2,3
+		/*
+			    Algo sees all positions as bad because it always looses no matter what it plays
+					V V
+			   	- - - - - - -
+			   	- - - o - - -
+			   	x - - o o - x
+			   	o o x o x - x
+			   	o o o x x - o
+			   	o x x x o x x
+			-----------------------------------
+				0 1 2 3 4 5 6
+				ANS: 2,3
 		*/
-		moves := []int{1, 0, 2, 4, 3, 0, 6, 1, 3, 2, 4, 6, 2, 0, 4, 1, 6, 3, 0, 4, 5, 3, 6, 3} //, 6, 2}
+		//moves := []int{1, 0, 2, 4, 3, 0, 6, 1, 3, 2, 4, 6, 2, 0, 4, 1, 6, 3, 0, 4, 5, 3, 6, 3} //, 6, 2}
 		/*    V     V
 			- - - - - - -
 			- - - - - - -
@@ -85,12 +87,12 @@ func main() {
 		//moves := []int{3, 3, 2, 2} //, 6, 2}
 
 		/*
-			             o
+			             x
 			             V
 				 - - - o - - -
 				 - o - x - - -
 				 - x o x - - -
-				 - x x x - - -
+				 - x x x - - o
 				 - x o o x - x
 				 o o o x x o o
 				-----------------------------------
@@ -98,7 +100,7 @@ func main() {
 				 ANS: 4
 
 		*/
-		//moves := []int{3, 3, 3, 6, 3, 2, 3, 3, 6, 2, 2, 1, 1, 0, 1, 2, 1, 1, 4, 5, 4, 4}
+		moves := []int{3, 3, 3, 6, 3, 2, 3, 3, 6, 2, 2, 1, 1, 0, 1, 2, 1, 1, 4, 5, 4, 6}
 		game = setupGame(game, moves)
 		//game.DumpBoard()
 		//fmt.Scanln()
@@ -110,7 +112,7 @@ func main() {
 				selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, selectedChild, false)
 				//Make a copy of root node for subsequent iterations, the idea being to pass the existing MCTS back for further iterations
 				mctsRootNode = selectedChild.GetParent()
-				fmt.Printf(api.DumpTree(mctsRootNode, 0))
+				//fmt.Printf(api.DumpTree(mctsRootNode, 0))
 				fmt.Print("Press 'Enter' to continue...")
 				fmt.Scanln()
 				//Since first move is always < QUARTER_OF_AVG_MOVES
@@ -118,7 +120,7 @@ func main() {
 
 			} else {
 				selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, selectedChild, false)
-				fmt.Printf(api.DumpTree(mctsRootNode, 0))
+				//fmt.Printf(api.DumpTree(mctsRootNode, 0))
 				fmt.Print("Press 'Enter' to continue...")
 				fmt.Scanln()
 
