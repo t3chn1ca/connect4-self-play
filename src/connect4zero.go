@@ -49,7 +49,7 @@ func main() {
 
 	lastUid := database.GetLastUid()
 	for {
-		for iteration := 0; iteration < 30; iteration++ {
+		for iteration := 0; iteration < 50; iteration++ {
 
 			var game = api.NewConnect4()
 			//game.DumpBoard()
@@ -59,7 +59,7 @@ func main() {
 				currRootNode = selectedChild
 				if selectedChild == nil {
 
-					selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, selectedChild, false)
+					selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, selectedChild, false, true)
 					//Make a copy of root node for subsequent iterations, the idea being to pass the existing MCTS back for further iterations
 					mctsRootNode = selectedChild.GetParent()
 
@@ -73,11 +73,11 @@ func main() {
 						//Cache old parent
 						oldParent := selectedChild
 						//Let MCTS create child nodes before random selection
-						selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, selectedChild, false)
+						selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, selectedChild, false, true)
 						//Pick child node from old parent
 						selectedChild = oldParent.GetRandomChildNode()
 					} else {
-						selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, selectedChild, false)
+						selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, selectedChild, false, true)
 					}
 					//fmt.Printf(api.DumpTree(mctsRootNode, 0))
 					//fmt.Print("Press 'Enter' to continue...")

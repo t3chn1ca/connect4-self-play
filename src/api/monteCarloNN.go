@@ -229,7 +229,7 @@ func CloneGame(game *Connect4) *mcts.Connect4 {
 	return &mctsGame
 }
 
-func MonteCarloTreeSearch(game *Connect4, max_iteration int, root *Node, debug bool) *Node {
+func MonteCarloTreeSearch(game *Connect4, max_iteration int, root *Node, debug bool, propablisticSampleOfPi bool) *Node {
 
 	boardIndex := game.GetBoardIndex()
 	fmt.Printf("\nMCTSNN root node index = %s\n", boardIndex.String())
@@ -356,8 +356,15 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, root *Node, debug b
 	//TODO: Sampled move might not exist as a child node, As even 0 (e^0 = 1) values result in positive propablity with softmax
 	//Softmax might not be a good idea for picking moves from pi, need a function which returns zero for zero pi values,
 	//so that valid moves are only sampled
-	moveSampled := propablisticSampleFromArray(pi)
-	fmt.Printf("Sampled move from Pi: %d\n", moveSampled)
+	var moveSampled int
+	if propablisticSampleOfPi {
+		moveSampled = propablisticSampleFromArray(pi)
+		fmt.Printf("Sampled move from Pi: %d\n", moveSampled)
+	} else {
+		moveSampled = pickHighestSampleFromArray(pi)
+		fmt.Printf("Highest visited move from Pi: %d\n", moveSampled)
+	}
+
 	for _, childNode := range root.ChildNodes {
 		if childNode.GetAction() == moveSampled {
 			return childNode
@@ -374,6 +381,18 @@ func sum(array [MAX_CHILD_NODES]float64) float64 {
 		result += v
 	}
 	return result
+}
+
+func pickHighestSampleFromArray(in [MAX_CHILD_NODES]float64) int {
+	highestIndex := 0
+	highestValue := 0.0
+	for index, value := range in {
+		if value > highestValue {
+			highestIndex = index
+			highestValue = value
+		}
+	}
+	return highestIndex
 }
 
 /*
