@@ -290,8 +290,9 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, root *Node, debug b
 				//fmt.Printf("EXP: action: %d PARENT of the child to be added %p\n", move, node)
 
 				nnOut := nnForwardPass(&gameTemp)
-				//mctsGame = CloneGame(&gameTemp)
+				//mctsGame := CloneGame(&gameTemp)
 				//nnOut := mcts.MctsForwardPass(mctsGame)
+
 				//fmt.Printf("EXP: Adding Child node playerJustMoved: %s, move: %d, unplayedMoves %v Value = %f\n", game.PlayerToString(playerJustMoved), move, validMoves, nnOut.value)
 				tempNode := node.addChild(playerJustMoved, boardIndex, move, validMoves, node.propActionChildNodes[move], nnOut.p, nnOut.value)
 				//fmt.Printf("EXP: value of child")
@@ -345,6 +346,7 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, root *Node, debug b
 
 	}
 
+	//Now moves are sampled based on pi, so sorting is not needed but during debugs sorted order is easier to read
 	sort.SliceStable(root.ChildNodes, func(i, j int) bool {
 		return root.ChildNodes[i].VisitCount < root.ChildNodes[j].VisitCount
 	})
@@ -359,7 +361,7 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, root *Node, debug b
 	var moveSampled int
 	if propablisticSampleOfPi {
 		moveSampled = propablisticSampleFromArray(pi)
-		fmt.Printf("Sampled move from Pi: %d\n", moveSampled)
+		fmt.Printf("Propablistic sampled move from Pi: %d\n", moveSampled)
 	} else {
 		moveSampled = pickHighestSampleFromArray(pi)
 		fmt.Printf("Highest visited move from Pi: %d\n", moveSampled)
