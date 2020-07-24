@@ -33,9 +33,10 @@ import (
 //On average there are 23 moves in connect-4 (ref:reddit.com/r/math/comments/1lo4od/how_many_games_of_connect4_there_are/)
 //Create a randomizer which picks random moves in the first 25% (5.75) of the moves
 
-const MAX_MCTS_ITERATIONS = 150
+const MAX_MCTS_ITERATIONS = 1000
 
-var QUARTER_OF_AVG_MOVES = 2
+//First moves are randomized to create a rich set of diverse games for training, else the games are repetetive due to the NN always responding in same way
+var QUARTER_OF_AVG_MOVES = 2 //Disable random first moves with -1 after some training
 
 func main() {
 	//defer profile.Start().Stop()
@@ -47,8 +48,9 @@ func main() {
 	var mctsRootNode *api.Node
 	selectedChild = nil
 
-	lastUid := database.GetLastUid()
 	for {
+		//In past all samples were used for training, now moved it to last 50 iterations
+		lastUid := database.GetLastUid()
 		for iteration := 0; iteration < 50; iteration++ {
 
 			var game = api.NewConnect4()
@@ -69,7 +71,7 @@ func main() {
 					//fmt.Scanln()
 				} else {
 					//Check we are 1/4 through the game for both players if not pick random
-					if move <= QUARTER_OF_AVG_MOVES*2 {
+					if move < QUARTER_OF_AVG_MOVES*2 {
 						//Cache old parent
 						oldParent := selectedChild
 						//Let MCTS create child nodes before random selection
