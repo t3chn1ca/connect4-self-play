@@ -4,7 +4,9 @@ import (
 	"api"
 	"db"
 	"fmt"
+	"log"
 	"math/rand"
+	"os"
 )
 
 /*
@@ -35,61 +37,64 @@ import (
 
 const MAX_MCTS_ITERATIONS = 1000
 
+const END_UID_INDEX = -1
+
 //First moves are randomized to create a rich set of diverse games for training, else the games are repetetive due to the NN always responding in same way
 var QUARTER_OF_AVG_MOVES = 2 //Disable random first moves with -1 after some training
 
+func initLogging() {
+	file, err := os.OpenFile("logs.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.SetOutput(file)
+}
+
 func main() {
+	initLogging()
+	log.Println("Starting connect4zero..")
 	//defer profile.Start().Stop()
 	rand.Seed(int64(api.Seed_for_rand))
 	var database db.Database
 	database.CreateTable()
+
 	var selectedChild *api.Node
 	var currRootNode *api.Node
 	var mctsRootNode *api.Node
-	selectedChild = nil
 
+	selectedChild = nil
 	for {
+
 		//In past all samples were used for training, now moved it to last 50 iterations
 		lastUid := database.GetLastUid()
-		for iteration := 0; iteration < 50; iteration++ {
+		log.Printf("LastUid= %d\n", lastUid)
+		var game = api.NewConnect4()
+		//Run MCTS first time to create root node and discard results of search , ie the selected child
+		selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, selectedChild, false, true)
+		//Make a copy of root node for caching, the idea being to pass the existing MCTS back for further iterations
+		mctsRootNode = selectedChild.GetParent()
+		//Set selectedChild to mctsRootNode so that an iteration can start from root
+		selectedChild = mctsRootNode
 
-			var game = api.NewConnect4()
-			//game.DumpBoard()
-			//fmt.Scanln()
+		for iteration := 0; iteration < 50; iteration++ {
 			var move = 0
+			game = api.NewConnect4()
+
 			for {
 				currRootNode = selectedChild
-				if selectedChild == nil {
-
-					selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, selectedChild, false, true)
-					//Make a copy of root node for subsequent iterations, the idea being to pass the existing MCTS back for further iterations
-					mctsRootNode = selectedChild.GetParent()
-
-					//Since first move is always < QUARTER_OF_AVG_MOVES
-					selectedChild = mctsRootNode.GetRandomChildNode()
-					//fmt.Print("Press 'Enter' to continue...")
-					//fmt.Scanln()
-				} else {
-					//Check we are 1/4 through the game for both players if not pick random
-					if move < QUARTER_OF_AVG_MOVES*2 {
-						//Cache old parent
-						oldParent := selectedChild
-						//Let MCTS create child nodes before random selection
-						selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, selectedChild, false, true)
-						//Pick child node from old parent
-						selectedChild = oldParent.GetRandomChildNode()
-					} else {
-						selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, selectedChild, false, true)
-					}
-					//fmt.Printf(api.DumpTree(mctsRootNode, 0))
-					//fmt.Print("Press 'Enter' to continue...")
-					//fmt.Scanln()
-
+				selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, currRootNode, false, true)
+				//Check we are 1/4 through the game for both players if not pick random
+				if move < QUARTER_OF_AVG_MOVES*2 {
+					//Let MCTS create child nodes before random selection
+					//Pick child node from old parent
+					selectedChild = currRootNode.GetRandomChildNode()
 				}
+				//fmt.Printf(api.DumpTree(mctsRootNode, 0))
+
 				move++
 				fmt.Printf("Move played by player %s = %d\n", game.PlayerToString(game.GetPlayerToMove()), selectedChild.GetAction())
 
-				if currRootNode != nil && currRootNode != mctsRootNode {
+				if currRootNode != mctsRootNode {
 					fmt.Println(currRootNode.ToString())
 					//fmt.Printf("Pi : %v\n", currRootNode.GetPi())
 					sample := database.CreateSample(currRootNode.GetPi(false), currRootNode.GetP(), currRootNode.GetV())
@@ -99,10 +104,11 @@ func main() {
 				game.PlayMove(selectedChild.GetAction())
 				fmt.Printf("Iteration: %d\n", iteration)
 				game.DumpBoard()
+				//fmt.Print("Press 'Enter' to continue...")
+				//fmt.Scanln()
 
 				if game.IsGameOver() {
-
-					database.UpdateWinner(iteration, game.PlayerToString(game.GetPlayerWhoJustMoved()))
+					database.UpdateWinner(lastUid, iteration, game.PlayerToString(game.GetPlayerWhoJustMoved()))
 					println("GAME OVER")
 					game.DumpBoard()
 					selectedChild = mctsRootNode
@@ -111,7 +117,25 @@ func main() {
 
 			}
 		}
-		api.TrainFromLastIteration(lastUid)
+
+		// END_UID_INDEX for to index means to the end
+		log.Printf("Starting to train from lasUid = %d\n", lastUid)
+		api.TrainFromLastIteration(lastUid, END_UID_INDEX)
+
+		log.Printf("Training complete\nTournament start\n")
+		results := api.Tournament(20)
+
+		fmt.Printf(" Results BEST PLAYER Wins = %f NEW PLAYER WINS = %f\n", 100*results.BestPlayerWins/results.TotalGames, 100*results.NewTrainedPlayerWins/results.TotalGames)
+		if results.NewTrainedPlayerWins/results.TotalGames > 0.55 {
+			//Newly trained player is better than the known best, replace the best
+			log.Printf("New Trained player wins %f pc of games\n", results.NewTrainedPlayerWins*100/results.TotalGames)
+			api.NnSaveTrainedModelToBest()
+			log.Printf("Saving newly trained player to best model\n")
+		} else {
+			log.Printf("Best model beats newly trained model with win pc = %f\n", results.BestPlayerWins*100/results.TotalGames)
+			api.NnLoadBestModelToGpu()
+			log.Printf("Loading best model to GPU to continue new iterations\n")
+		}
 	}
 
 }

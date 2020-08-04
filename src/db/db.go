@@ -30,7 +30,7 @@ type TrainingSample struct {
 
 func (db *Database) GetLastUid() int32 {
 	sql_str := fmt.Sprintf("SELECT uid from training ORDER BY uid DESC limit 1")
-	fmt.Printf(" SQL : %s\n", sql_str)
+	//fmt.Printf(" SQL : %s\n", sql_str)
 	rows, err := db.conn.Query(sql_str)
 	checkErr(err)
 
@@ -42,9 +42,9 @@ func (db *Database) GetLastUid() int32 {
 }
 
 // At end of game update all Z values for this iteration from ENDGAME result
-func (db *Database) UpdateWinner(iteration int, playerWon string) {
-	//Update Z for winner
-	sql_str := fmt.Sprintf("UPDATE training SET z = 1 WHERE playerToMove = '%s' AND iteration = %d", playerWon, iteration)
+func (db *Database) UpdateWinner(lastUid int32, iteration int, playerWon string) {
+	//Update Z for winner for current iteration only ( not past trainings iterations )
+	sql_str := fmt.Sprintf("UPDATE training SET z = 1 WHERE uid > %d AND playerToMove = '%s' AND iteration = %d", lastUid, playerWon, iteration)
 	//fmt.Printf(" SQL : %s\n", sql_str)
 	stmt, err := db.conn.Prepare(sql_str)
 	checkErr(err)
@@ -52,8 +52,8 @@ func (db *Database) UpdateWinner(iteration int, playerWon string) {
 	_, err = stmt.Exec()
 	checkErr(err)
 
-	//Update Z for looser
-	sql_str = fmt.Sprintf("UPDATE training SET z = -1 WHERE playerToMove != '%s' AND iteration = %d", playerWon, iteration)
+	//Update Z for looser for current iteration only ( not past trainings iterations )
+	sql_str = fmt.Sprintf("UPDATE training SET z = -1 WHERE uid > %d AND playerToMove != '%s' AND iteration = %d", lastUid, playerWon, iteration)
 	//fmt.Printf(" SQL : %s\n", sql_str)
 	stmt, err = db.conn.Prepare(sql_str)
 	checkErr(err)

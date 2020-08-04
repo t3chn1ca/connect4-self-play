@@ -32,10 +32,22 @@ func main() {
 	var game = api.NewConnect4()
 	//setupGame(game, []int{3, 3, 2, 4, 1, 0, 3, 3, 2, 2, 1, 1, 1, 0, 0, 2, 3, 2, 2, 3, 0, 0})
 	//fmt.Scanln()
+
+	//DEBUG
+	var firstMoveDone bool = false
 	for {
 
-		selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, selectedChild, false, false)
+		selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, selectedChild, false, false)
 		fmt.Printf("Move played by Player %s = %d\n", game.PlayerToString(game.GetPlayerToMove()), selectedChild.GetAction())
+
+		if firstMoveDone == false {
+			for _, child := range selectedChild.GetParentNode().ChildNodes {
+				if child.GetAction() == 3 {
+					selectedChild = child
+					firstMoveDone = true
+				}
+			}
+		}
 
 		game.PlayMove(selectedChild.GetAction())
 		game.DumpBoard()

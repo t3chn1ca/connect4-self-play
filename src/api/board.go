@@ -67,6 +67,14 @@ func (b Connect4) IsDone() bool {
 
 }
 
+func (b *Connect4) IsGameDraw() bool {
+	if b.GameStatus() == GAME_DRAW {
+		return true
+	} else {
+		return false
+	}
+}
+
 func (b *Connect4) GameStatus() int {
 
 	if b.playerMadeBadMove {

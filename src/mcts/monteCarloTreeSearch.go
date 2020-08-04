@@ -161,11 +161,11 @@ Pi[7] , where index is action
 */
 func (node *Node) GetPi() [MAX_CHILD_NODES]float32 {
 	var pi [MAX_CHILD_NODES]float32
-	fmt.Println("==========MCTS============")
+	//fmt.Println("==========MCTS============")
 	for _, childNode := range node.ChildNodes {
-		fmt.Printf("ChildNode action: %d visit: %d, Parent node visit: %d\n", childNode.action, childNode.VisitCount, node.VisitCount)
+		//fmt.Printf("ChildNode action: %d visit: %d, Parent node visit: %d\n", childNode.action, childNode.VisitCount, node.VisitCount)
 		pi[childNode.action] = float32(math.Pow(float64(childNode.VisitCount), T) / math.Pow(float64(node.VisitCount), T))
-		fmt.Printf("Pi[%d] = %f\n", childNode.action, pi[childNode.action])
+		//fmt.Printf("Pi[%d] = %f\n", childNode.action, pi[childNode.action])
 	}
 	//fmt.Printf("Pi  = %v\n", pi)
 	return pi
@@ -186,9 +186,9 @@ func MctsForwardPass(game *Connect4) NNOut {
 	parentNode := selectedNode.parent
 	//The value of this board position is wrt to the player who played to get here
 	nnOut.Value = parentNode.getValue()
-	boardIndex := game.GetBoardIndex()
-	fmt.Printf("MCTS boardIndex = %s\n", boardIndex.String())
-	fmt.Printf("MCTS Value: %f\n", parentNode.getValue())
+	//boardIndex := game.GetBoardIndex()
+	//fmt.Printf("MCTS boardIndex = %s\n", boardIndex.String())
+	//fmt.Printf("MCTS Value: %f\n", parentNode.getValue())
 	pi := parentNode.GetPi()
 	nnOut.P = pi[:]
 
@@ -313,8 +313,8 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, root *Node, debug b
 		}
 	*/
 	boardIndex = game.GetBoardIndex()
-	fmt.Printf("\n BoardIndex %s \n", boardIndex.String())
+	//fmt.Printf("\n BoardIndex %s \n", boardIndex.String())
 	//fmt.Printf("\nBoardIndex: %s Selected move for %s = %d\n", boardIndex.String(), game.PlayerToString(game.GetPlayerToMove()), root.ChildNodes[len(root.ChildNodes)-1].action)
-	fmt.Printf("Len childNodes = %d\n", len(root.ChildNodes))
+	//fmt.Printf("Len childNodes = %d\n", len(root.ChildNodes))
 	return root.ChildNodes[len(root.ChildNodes)-1]
 }

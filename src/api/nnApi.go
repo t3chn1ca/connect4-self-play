@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"proto"
+	"strconv"
 	"time"
 
 	"google.golang.org/grpc"
@@ -21,7 +22,115 @@ var kacp = keepalive.ClientParameters{
 	PermitWithoutStream: true,             // send pings even without active streams
 }
 
-func nnTrain(trainFromIndex int32) int32 {
+func NnLoadBestModelToGpu() int32 {
+	fmt.Println("NnLoadBestModelToGpu: Loading best model to GPU ")
+	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure()) //, grpc.WithKeepaliveParams(kacp))
+	if err != nil {
+		fmt.Println("ERROR!: Connection to server failed, check server is started!")
+		panic(err)
+	}
+	client := proto.NewAddServiceClient(conn)
+
+	deadlineMs := 1000000
+	//Increase timeout as the server on init takes few secs to return ( its loading nn into GPU memory)
+	clientDeadline := time.Now().Add(time.Duration(deadlineMs) * time.Millisecond)
+	ctx, _ := context.WithDeadline(context.Background(), clientDeadline)
+
+	//ctx, _ := context.WithTimeout(context.Background(), time.Second)
+	args := &proto.NoArg{}
+	response, err := client.LoadBestModelToGpu(ctx, args)
+	if err != nil {
+		fmt.Println("ERROR!: Connection to server failed, check server is started!")
+		panic(err)
+	}
+
+	conn.Close()
+
+	return response.Status
+}
+func NnSaveTrainedModelToBest() int32 {
+	fmt.Println("NnSaveTrainedModelToBest: Saving trained model to best")
+	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure()) //, grpc.WithKeepaliveParams(kacp))
+	if err != nil {
+		fmt.Println("ERROR!: Connection to server failed, check server is started!")
+		panic(err)
+	}
+	client := proto.NewAddServiceClient(conn)
+
+	deadlineMs := 1000000
+	//Increase timeout as the server on init takes few secs to return ( its loading nn into GPU memory)
+	clientDeadline := time.Now().Add(time.Duration(deadlineMs) * time.Millisecond)
+	ctx, _ := context.WithDeadline(context.Background(), clientDeadline)
+
+	//ctx, _ := context.WithTimeout(context.Background(), time.Second)
+	args := &proto.NoArg{}
+	response, err := client.SaveCurrentModelToBest(ctx, args)
+	if err != nil {
+		fmt.Println("ERROR!: Connection to server failed, check server is started!")
+		panic(err)
+	}
+
+	conn.Close()
+
+	return response.Status
+}
+
+func NnStopCpuModel() int32 {
+	fmt.Println("NnStopCpuModel: Stopping model to cpu ")
+	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure()) //, grpc.WithKeepaliveParams(kacp))
+	if err != nil {
+		fmt.Println("ERROR!: Connection to server failed, check server is started!")
+		panic(err)
+	}
+	client := proto.NewAddServiceClient(conn)
+
+	deadlineMs := 1000000
+	//Increase timeout as the server on init takes few secs to return ( its loading nn into GPU memory)
+	clientDeadline := time.Now().Add(time.Duration(deadlineMs) * time.Millisecond)
+	ctx, _ := context.WithDeadline(context.Background(), clientDeadline)
+
+	//ctx, _ := context.WithTimeout(context.Background(), time.Second)
+	args := &proto.NoArg{}
+	response, err := client.StopBestModelCpu(ctx, args)
+	if err != nil {
+		fmt.Println("ERROR!: Connection to server failed, check server is started!")
+		panic(err)
+	}
+
+	conn.Close()
+
+	return response.Status
+}
+
+func NnLoadCpuModel() int32 {
+	fmt.Println("NnLoadCpuModel: Loading model to cpu ")
+	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure()) //, grpc.WithKeepaliveParams(kacp))
+	if err != nil {
+		fmt.Println("ERROR!: Connection to server failed, check server is started!")
+		panic(err)
+	}
+	client := proto.NewAddServiceClient(conn)
+
+	deadlineMs := 1000000
+	//Increase timeout as the server on init takes few secs to return ( its loading nn into GPU memory)
+	clientDeadline := time.Now().Add(time.Duration(deadlineMs) * time.Millisecond)
+	ctx, _ := context.WithDeadline(context.Background(), clientDeadline)
+
+	//ctx, _ := context.WithTimeout(context.Background(), time.Second)
+	args := &proto.NoArg{}
+	response, err := client.LoadBestModelToCpu(ctx, args)
+	if err != nil {
+		fmt.Println("ERROR!: Connection to server failed, check server is started!")
+		panic(err)
+	}
+
+	conn.Close()
+
+	return response.Status
+}
+
+func nnTrain(trainFromIndex int32, trainToIndex int32) int32 {
+	fmt.Println("nnTrain: Training model on GPU")
 	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure()) //, grpc.WithKeepaliveParams(kacp))
 	if err != nil {
 		fmt.Println("ERROR!: Connection to server failed, check server is started!")
@@ -29,7 +138,7 @@ func nnTrain(trainFromIndex int32) int32 {
 	}
 
 	client := proto.NewAddServiceClient(conn)
-	req := &proto.TrainFromIndex{Uid: trainFromIndex}
+	req := &proto.TrainFromIndex{UidFrom: trainFromIndex, UidTo: trainToIndex}
 
 	deadlineMs := 1000000
 	//Increase timeout as the server on init takes few secs to return ( its loading nn into GPU memory)
@@ -49,8 +158,9 @@ func nnTrain(trainFromIndex int32) int32 {
 	return response.Status
 }
 
-func nnForwardPass(game *Connect4) NNOut {
-	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure()) //, grpc.WithKeepaliveParams(kacp))
+func nnForwardPass(game *Connect4, port int) NNOut {
+	portStr := "localhost:" + strconv.Itoa(port)
+	conn, err := grpc.Dial(portStr, grpc.WithInsecure()) //, grpc.WithKeepaliveParams(kacp))
 	if err != nil {
 		fmt.Println("ERROR!: Connection to server failed, check server is started!")
 		panic(err)
@@ -89,6 +199,6 @@ func nnForwardPass(game *Connect4) NNOut {
 /*
   Train the NN using the play data from the last iteration
 */
-func TrainFromLastIteration(uid int32) {
-	nnTrain(uid)
+func TrainFromLastIteration(uidFrom int32, uidTo int32) {
+	nnTrain(uidFrom, uidTo)
 }

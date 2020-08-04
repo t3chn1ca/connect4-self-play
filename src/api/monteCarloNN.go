@@ -86,6 +86,10 @@ func (node *Node) getChildNodes() []*Node {
 	return node.ChildNodes
 }
 
+func (node *Node) GetParentNode() *Node {
+	return node.parent
+}
+
 // Upper bound confidence
 func (node *Node) getUbc() float32 {
 	//Exploration term is high for less visited nodes
@@ -229,7 +233,7 @@ func CloneGame(game *Connect4) *mcts.Connect4 {
 	return &mctsGame
 }
 
-func MonteCarloTreeSearch(game *Connect4, max_iteration int, root *Node, debug bool, propablisticSampleOfPi bool) *Node {
+func MonteCarloTreeSearch(game *Connect4, max_iteration int, serverPort int, root *Node, debug bool, propablisticSampleOfPi bool) *Node {
 
 	boardIndex := game.GetBoardIndex()
 	fmt.Printf("\nMCTSNN root node index = %s\n", boardIndex.String())
@@ -242,7 +246,7 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, root *Node, debug b
 		unplayedMoves := game.GetValidMoves()
 		root = &rootNode
 		fmt.Printf("Creating ROOT node playerJustMoved: %s, unplayedMoves %v", game.PlayerToString(playerWhoJustMoved), unplayedMoves)
-		nnOut := nnForwardPass(game)
+		nnOut := nnForwardPass(game, serverPort)
 		//mctsGame = CloneGame(game)
 		//nnOut := mcts.MctsForwardPass(mctsGame)
 		root.init(playerWhoJustMoved, nil, boardIndex, 0, unplayedMoves, 0, nnOut.p, nnOut.value)
@@ -289,7 +293,7 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, root *Node, debug b
 				validMoves := gameTemp.GetValidMoves()
 				//fmt.Printf("EXP: action: %d PARENT of the child to be added %p\n", move, node)
 
-				nnOut := nnForwardPass(&gameTemp)
+				nnOut := nnForwardPass(&gameTemp, serverPort)
 				//mctsGame := CloneGame(&gameTemp)
 				//nnOut := mcts.MctsForwardPass(mctsGame)
 
@@ -354,6 +358,7 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, root *Node, debug b
 	//fmt.Printf("Selected move for %s = %d\n", game.PlayerToString(game.GetPlayerToMove()), root.ChildNodes[len(root.ChildNodes)-1].action)
 	pi := root.GetPi(true)
 	//fmt.Printf("Pis : %v\n", pi)
+	fmt.Printf("Position win pc = %f\n", root.Q*100)
 
 	//TODO: Sampled move might not exist as a child node, As even 0 (e^0 = 1) values result in positive propablity with softmax
 	//Softmax might not be a good idea for picking moves from pi, need a function which returns zero for zero pi values,
