@@ -39,7 +39,9 @@ const MAX_MCTS_ITERATIONS = 1000
 
 const END_UID_INDEX = -1
 
-//First moves are randomized to create a rich set of diverse games for training, else the games are repetetive due to the NN always responding in same way
+const PROPABLISTIC_SAMPLING_FALSE = false
+
+//First moves are randomized to create a rich set of diverse games for training, else the games are repetetive due to the NN always responding the same way
 var QUARTER_OF_AVG_MOVES = 2 //Disable random first moves with -1 after some training
 
 func initLogging() {
@@ -56,7 +58,7 @@ func main() {
 	//defer profile.Start().Stop()
 	rand.Seed(int64(api.Seed_for_rand))
 	var database db.Database
-	database.CreateTable()
+	database.CreateTable("mctsTraining")
 
 	var selectedChild *api.Node
 	var currRootNode *api.Node
@@ -70,19 +72,19 @@ func main() {
 		log.Printf("LastUid= %d\n", lastUid)
 		var game = api.NewConnect4()
 		//Run MCTS first time to create root node and discard results of search , ie the selected child
-		selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, selectedChild, false, true)
+		selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, selectedChild, false, PROPABLISTIC_SAMPLING_FALSE)
 		//Make a copy of root node for caching, the idea being to pass the existing MCTS back for further iterations
 		mctsRootNode = selectedChild.GetParent()
 		//Set selectedChild to mctsRootNode so that an iteration can start from root
 		selectedChild = mctsRootNode
 
-		for iteration := 0; iteration < 50; iteration++ {
+		for iteration := 0; iteration < 500; iteration++ {
 			var move = 0
 			game = api.NewConnect4()
 
 			for {
 				currRootNode = selectedChild
-				selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, currRootNode, false, true)
+				selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, currRootNode, false, PROPABLISTIC_SAMPLING_FALSE)
 				//Check we are 1/4 through the game for both players if not pick random
 				if move < QUARTER_OF_AVG_MOVES*2 {
 					//Let MCTS create child nodes before random selection

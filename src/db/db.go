@@ -62,8 +62,8 @@ func (db *Database) UpdateWinner(lastUid int32, iteration int, playerWon string)
 	checkErr(err)
 }
 
-func (db *Database) CreateTable() {
-	dbCon, err := sql.Open("sqlite3", "./test.db")
+func (db *Database) CreateTable(tableName string) {
+	dbCon, err := sql.Open("sqlite3", "./"+tableName+".db")
 	checkErr(err)
 
 	stmt, err := dbCon.Prepare("CREATE TABLE IF NOT EXISTS training(uid integer PRIMARY KEY AUTOINCREMENT, boardIndex TEXT, playerToMove TEXT, created datetime, iteration INTEGER, json TEXT, z INTEGER);")

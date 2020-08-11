@@ -6,7 +6,7 @@ import (
 	"math/rand"
 )
 
-const MAX_MCTS_ITERATIONS = 1000
+const MAX_MCTS_ITERATIONS = 1500
 
 func setupGame(game *api.Connect4, moves []int) *api.Connect4 {
 
@@ -33,21 +33,22 @@ func main() {
 	//setupGame(game, []int{3, 3, 2, 4, 1, 0, 3, 3, 2, 2, 1, 1, 1, 0, 0, 2, 3, 2, 2, 3, 0, 0})
 	//fmt.Scanln()
 
-	//DEBUG
-	var firstMoveDone bool = false
+	//var firstMoveDone bool = false
 	for {
 
 		selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, selectedChild, false, false)
 		fmt.Printf("Move played by Player %s = %d\n", game.PlayerToString(game.GetPlayerToMove()), selectedChild.GetAction())
 
-		if firstMoveDone == false {
-			for _, child := range selectedChild.GetParentNode().ChildNodes {
-				if child.GetAction() == 3 {
-					selectedChild = child
-					firstMoveDone = true
+		/*
+			if firstMoveDone == false {
+				for _, child := range selectedChild.GetParentNode().ChildNodes {
+					if child.GetAction() == 3 {
+						selectedChild = child
+						firstMoveDone = true
+					}
 				}
 			}
-		}
+		*/
 
 		game.PlayMove(selectedChild.GetAction())
 		game.DumpBoard()
@@ -58,7 +59,10 @@ func main() {
 		}
 		fmt.Printf("Human move: ")
 		var humanMove int
-		fmt.Scanf("%d", &humanMove)
+		n, _ := fmt.Scanf("%d", &humanMove)
+		if humanMove < 0 || humanMove > 6 || n == 0 {
+			fmt.Printf("Incorrect Move!!!\nHuman move: ")
+		}
 		game.PlayMove(humanMove)
 		game.DumpBoard()
 		if game.IsGameOver() {

@@ -12,8 +12,8 @@ import (
 )
 
 type NNOut struct {
-	value float32
-	p     []float32
+	Value float32
+	P     []float32
 }
 
 var kacp = keepalive.ClientParameters{
@@ -129,7 +129,7 @@ func NnLoadCpuModel() int32 {
 	return response.Status
 }
 
-func nnTrain(trainFromIndex int32, trainToIndex int32) int32 {
+func NnTrain(trainFromIndex int32, trainToIndex int32) int32 {
 	fmt.Println("nnTrain: Training model on GPU")
 	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure()) //, grpc.WithKeepaliveParams(kacp))
 	if err != nil {
@@ -158,7 +158,7 @@ func nnTrain(trainFromIndex int32, trainToIndex int32) int32 {
 	return response.Status
 }
 
-func nnForwardPass(game *Connect4, port int) NNOut {
+func NnForwardPass(game *Connect4, port int) NNOut {
 	portStr := "localhost:" + strconv.Itoa(port)
 	conn, err := grpc.Dial(portStr, grpc.WithInsecure()) //, grpc.WithKeepaliveParams(kacp))
 	if err != nil {
@@ -187,10 +187,10 @@ func nnForwardPass(game *Connect4, port int) NNOut {
 	var nnOut NNOut
 	//fmt.Printf("Response %v", response.Result)
 
-	nnOut.value = float32(response.Result[0])
+	nnOut.Value = float32(response.Result[0])
 	for i := 1; i <= 7; i++ {
 		//fmt.Println(i)
-		nnOut.p = append(nnOut.p, float32(response.Result[i]))
+		nnOut.P = append(nnOut.P, float32(response.Result[i]))
 	}
 
 	return nnOut
@@ -200,5 +200,5 @@ func nnForwardPass(game *Connect4, port int) NNOut {
   Train the NN using the play data from the last iteration
 */
 func TrainFromLastIteration(uidFrom int32, uidTo int32) {
-	nnTrain(uidFrom, uidTo)
+	NnTrain(uidFrom, uidTo)
 }

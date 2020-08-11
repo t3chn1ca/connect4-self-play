@@ -37,6 +37,14 @@ type Connect4 struct {
 
 var RandomNumGenerator *rand.Rand
 
+func NewConnect4FromIndex(boardIndex big.Int, nextPlayerToMove int64) *Connect4 {
+	connect4 := new(Connect4)
+	connect4.board = connect4.IndexToBoard(boardIndex)
+	connect4.nextPlayerToMove = nextPlayerToMove
+	connect4.gameOver = false
+	return connect4
+}
+
 func NewConnect4() *Connect4 {
 	connect4 := new(Connect4)
 	connect4.nextPlayerToMove = PLAYER_1
@@ -119,6 +127,19 @@ func (b *Connect4) GameStatus() int {
 
 }
 
+// Get all possible board states from current move
+func (b Connect4) GetValidBoardIndexesFromMove() [MAX_CHILD_NODES]big.Int {
+	var validBoardIndexes [MAX_CHILD_NODES]big.Int
+	validMoves := b.GetValidMoves()
+
+	for _, action := range validMoves {
+		var boardTemp Connect4 = b
+		boardTemp.PlayMove(action)
+		validBoardIndexes[action] = boardTemp.GetBoardIndex()
+	}
+	return validBoardIndexes
+}
+
 func (b Connect4) GetValidMoves() []int {
 	var validMoves []int
 	for x := 0; x < maxX; x++ {
@@ -192,18 +213,19 @@ func (b Connect4) GetBoardIndex() big.Int {
 	return *boardIndex
 }
 
-//TODO: Fix board index
-func (b Connect4) IndexToBoard(boardIndex big.Int) [maxY * maxX]int64 {
-	var board [maxY * maxX]int64
+func (b Connect4) IndexToBoard(boardIndex big.Int) [maxY][maxX]int64 {
+	//var board [maxY * maxX]int64
+	var board [maxY][maxX]int64
 	const arrayLen = maxY * maxX
 	temp := boardIndex
 	ternary_ith_pos := new(big.Int)
 
-	for i := 0; i < (6 * maxX); i++ {
+	for i := 0; i < (maxY * maxX); i++ {
 		//ternary_ith_pos = temp%3
 		ternary_ith_pos = ternary_ith_pos.Mod(&temp, big.NewInt(3))
-		//board[i] = ternary_ith_pos
-		board[i] = ternary_ith_pos.Int64()
+		//board[y][x] = ternary_ith_pos
+		fmt.Printf(" i = %d\n", i)
+		board[i/maxX][i%maxX] = ternary_ith_pos.Int64()
 		//temp = temp/3
 		temp.Div(&temp, big.NewInt(3))
 		//if temp == 0
