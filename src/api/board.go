@@ -37,10 +37,9 @@ type Connect4 struct {
 
 var RandomNumGenerator *rand.Rand
 
-func NewConnect4FromIndex(boardIndex big.Int, nextPlayerToMove int64) *Connect4 {
+func NewConnect4FromIndex(boardIndex big.Int) *Connect4 {
 	connect4 := new(Connect4)
-	connect4.board = connect4.IndexToBoard(boardIndex)
-	connect4.nextPlayerToMove = nextPlayerToMove
+	connect4.board, connect4.nextPlayerToMove = connect4.IndexToBoard(boardIndex)
 	connect4.gameOver = false
 	return connect4
 }
@@ -213,10 +212,12 @@ func (b Connect4) GetBoardIndex() big.Int {
 	return *boardIndex
 }
 
-func (b Connect4) IndexToBoard(boardIndex big.Int) [maxY][maxX]int64 {
+func (b Connect4) IndexToBoard(boardIndex big.Int) ([maxY][maxX]int64, int64) {
 	//var board [maxY * maxX]int64
 	var board [maxY][maxX]int64
 	const arrayLen = maxY * maxX
+	var countOfMoves int8
+	var nextPlayerToMove int64
 	temp := boardIndex
 	ternary_ith_pos := new(big.Int)
 
@@ -224,8 +225,17 @@ func (b Connect4) IndexToBoard(boardIndex big.Int) [maxY][maxX]int64 {
 		//ternary_ith_pos = temp%3
 		ternary_ith_pos = ternary_ith_pos.Mod(&temp, big.NewInt(3))
 		//board[y][x] = ternary_ith_pos
-		fmt.Printf(" i = %d\n", i)
-		board[i/maxX][i%maxX] = ternary_ith_pos.Int64()
+		//fmt.Printf(" i = %d y = %d x = %d\n", i, i/maxX, i%maxX)
+		var boardSlotValue int64
+		if ternary_ith_pos.Cmp(big.NewInt(1)) == 0 {
+			boardSlotValue = 1
+			countOfMoves++
+		}
+		if ternary_ith_pos.Cmp(big.NewInt(2)) == 0 {
+			boardSlotValue = -1
+			countOfMoves++
+		}
+		board[i/maxX][i%maxX] = boardSlotValue
 		//temp = temp/3
 		temp.Div(&temp, big.NewInt(3))
 		//if temp == 0
@@ -233,8 +243,15 @@ func (b Connect4) IndexToBoard(boardIndex big.Int) [maxY][maxX]int64 {
 			break
 		}
 	}
+	if countOfMoves%2 == 0 {
+		//If its even any player could move next, will pick 1 for convinience
+		nextPlayerToMove = PLAYER_1
+	}
+	if countOfMoves%2 == 1 {
+		nextPlayerToMove = PLAYER_2
+	}
 
-	return board
+	return board, nextPlayerToMove
 }
 
 func (b Connect4) GetBoardFlatInt32() []int32 {
