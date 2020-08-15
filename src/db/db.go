@@ -44,7 +44,7 @@ func (db *Database) GetLastUid() int32 {
 // At end of game update all Z values for this iteration from ENDGAME result
 func (db *Database) UpdateWinner(lastUid int32, iteration int, playerWon string) {
 	//Update Z for winner for current iteration only ( not past trainings iterations )
-	sql_str := fmt.Sprintf("UPDATE training SET z = 1 WHERE uid > %d AND playerToMove = '%s' AND iteration = %d", lastUid, playerWon, iteration)
+	sql_str := fmt.Sprintf("UPDATE training SET z = -1 WHERE uid > %d AND playerToMove = '%s' AND iteration = %d", lastUid, playerWon, iteration)
 	//fmt.Printf(" SQL : %s\n", sql_str)
 	stmt, err := db.conn.Prepare(sql_str)
 	checkErr(err)
@@ -53,7 +53,7 @@ func (db *Database) UpdateWinner(lastUid int32, iteration int, playerWon string)
 	checkErr(err)
 
 	//Update Z for looser for current iteration only ( not past trainings iterations )
-	sql_str = fmt.Sprintf("UPDATE training SET z = -1 WHERE uid > %d AND playerToMove != '%s' AND iteration = %d", lastUid, playerWon, iteration)
+	sql_str = fmt.Sprintf("UPDATE training SET z = 1 WHERE uid > %d AND playerToMove != '%s' AND iteration = %d", lastUid, playerWon, iteration)
 	//fmt.Printf(" SQL : %s\n", sql_str)
 	stmt, err = db.conn.Prepare(sql_str)
 	checkErr(err)
@@ -62,8 +62,8 @@ func (db *Database) UpdateWinner(lastUid int32, iteration int, playerWon string)
 	checkErr(err)
 }
 
-func (db *Database) CreateTable(tableName string) {
-	dbCon, err := sql.Open("sqlite3", "./"+tableName+".db")
+func (db *Database) CreateTable(dbFile string) {
+	dbCon, err := sql.Open("sqlite3", "./"+dbFile+".db")
 	checkErr(err)
 
 	stmt, err := dbCon.Prepare("CREATE TABLE IF NOT EXISTS training(uid integer PRIMARY KEY AUTOINCREMENT, boardIndex TEXT, playerToMove TEXT, created datetime, iteration INTEGER, json TEXT, z INTEGER);")
