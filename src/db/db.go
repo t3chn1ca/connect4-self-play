@@ -23,9 +23,10 @@ type Database struct {
 }
 
 type TrainingSample struct {
-	Pi [7]float64 //MCTS based propablity of moves
-	P  []float32  //NN propablity for moves
-	V  float32    // NN value
+	Pi   [7]float64 //MCTS based propablity of moves
+	P    []float32  //NN propablity for moves
+	V    float32    // NN value
+	AvgV float32    //Avg Value of all children under this node
 }
 
 func (db *Database) GetLastUid() int32 {
@@ -73,12 +74,13 @@ func (db *Database) CreateTable(dbFile string) {
 	db.conn = dbCon
 }
 
-func (db Database) CreateSample(Pi [7]float64, P []float32, V float32) TrainingSample {
+func (db Database) CreateSample(Pi [7]float64, P []float32, V float32, AvgV float32) TrainingSample {
 	var sample TrainingSample
 
 	sample.Pi = Pi
 	sample.P = P
 	sample.V = V
+	sample.AvgV = AvgV
 	return sample
 }
 

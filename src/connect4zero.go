@@ -58,7 +58,7 @@ func main() {
 	//defer profile.Start().Stop()
 	rand.Seed(int64(api.Seed_for_rand))
 	var database db.Database
-	database.CreateTable("mctsTraining")
+	database.CreateTable("mctsWithQVal")
 
 	var selectedChild *api.Node
 	var currRootNode *api.Node
@@ -78,7 +78,7 @@ func main() {
 		//Set selectedChild to mctsRootNode so that an iteration can start from root
 		selectedChild = mctsRootNode
 
-		for iteration := 0; iteration < 500; iteration++ {
+		for iteration := 0; iteration < 100; iteration++ {
 			var move = 0
 			game = api.NewConnect4()
 
@@ -99,7 +99,7 @@ func main() {
 				if currRootNode != mctsRootNode {
 					fmt.Println(currRootNode.ToString())
 					//fmt.Printf("Pi : %v\n", currRootNode.GetPi())
-					sample := database.CreateSample(currRootNode.GetPi(false), currRootNode.GetP(), currRootNode.GetV())
+					sample := database.CreateSample(currRootNode.GetPi(false), currRootNode.GetP(), currRootNode.GetV(), currRootNode.GetQ())
 					database.Insert(currRootNode.GetBoardIndex(), iteration, sample, game.PlayerToString(game.GetPlayerToMove()))
 				}
 
@@ -121,7 +121,7 @@ func main() {
 		}
 
 		// END_UID_INDEX for to index means to the end
-		log.Printf("Starting to train from lasUid = %d\n", lastUid)
+		log.Printf("Starting to train from lastUid = %d\n", lastUid)
 		api.TrainFromLastIteration(lastUid, END_UID_INDEX)
 
 		log.Printf("Training complete\nTournament start\n")

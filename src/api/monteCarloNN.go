@@ -29,7 +29,7 @@ type Node struct {
 
 	//Current State parameters
 	VisitCount           uint      // N
-	v                    float32   //value as returned by NN
+	v                    float32   //value as returned by NN , v is the value of the node from eyes of player who would be playing to get to this node
 	Q                    float32   //Action value ( tracks the avg of all v under this node)
 	vTotal               float32   //Sum of all v under this node
 	propActionChildNodes []float32 //Propablity of all child actions from this node, returned by NN
@@ -159,6 +159,10 @@ func (node *Node) GetBoardIndex() big.Int {
 
 func (node *Node) GetPlayerJustMoved() int64 {
 	return node.playerJustMoved
+}
+
+func (node *Node) GetQ() float32 {
+	return node.Q
 }
 
 func (node *Node) GetV() float32 {

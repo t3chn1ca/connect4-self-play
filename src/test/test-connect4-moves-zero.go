@@ -3,16 +3,23 @@ package main
 import (
 	"api"
 	"fmt"
+	"math/big"
 	"math/rand"
 )
 
 const PASS = true
 const FAIL = false
 
-const MAX_MCTS_ITERATIONS = 750
+const MAX_MCTS_ITERATIONS = 900
 
 var failCount = 0
 var runCount = 0
+
+func setupGameWithBoardIndex(boardIndex big.Int) *api.Connect4 {
+	var game = api.NewConnect4FromIndex(boardIndex)
+	game.DumpBoard()
+	return game
+}
 
 func setupGame(game *api.Connect4, moves []int) *api.Connect4 {
 
@@ -25,6 +32,37 @@ func setupGame(game *api.Connect4, moves []int) *api.Connect4 {
 	game.DumpBoard()
 	return game
 
+}
+
+func testCaseWrapperBoardIndex(boardIndex big.Int, validActions []int, testCaseName string) bool {
+	fmt.Println("\n================================" + testCaseName + ": START======================")
+
+	game := setupGameWithBoardIndex(boardIndex)
+	var result bool = FAIL
+
+	nnOut := api.NnForwardPass(game, api.TRAIN_SERVER_PORT)
+	fmt.Printf("Value = %v\n", nnOut.Value)
+	fmt.Printf("props %v\n", nnOut.P)
+
+	selectedChild := api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, nil, false, false)
+
+	runCount++
+	for _, action := range validActions {
+		if action == selectedChild.GetAction() {
+
+			result = PASS
+			break
+		}
+	}
+
+	if result == PASS {
+		fmt.Println("\n#####" + testCaseName + " PASS")
+	} else {
+		failCount++
+		fmt.Println("\n#####" + testCaseName + " FAIL")
+	}
+	fmt.Println("\n================================" + testCaseName + ": END======================")
+	return result
 }
 
 func testCaseWrapper(moves []int, validActions []int, testCaseName string) bool {
@@ -160,7 +198,7 @@ func test6() bool {
 	*/
 
 	moves := []int{0, 0, 0, 2, 2, 3}
-	result := testCaseWrapper(moves, []int{1, 4}, "test6")
+	result := testCaseWrapper(moves, []int{1, 4, 5}, "test6")
 	return result
 
 }
@@ -183,6 +221,48 @@ func test7() bool {
 
 }
 
+func test8() bool {
+	/*
+		To block 'o' from doubling
+		V
+		- - - o x x -
+		- - x o o o -
+		- - o x x x -
+		- - o o x x -
+		- o x o o o -
+		x x x o o x -
+		-----------------------------------
+		0 1 2 3 4 5 6
+
+
+	*/
+
+	var boardIndex big.Int
+	boardIndex.SetString("31028075286456153321", 10)
+	result := testCaseWrapperBoardIndex(boardIndex, []int{0}, "test8")
+	return result
+
+}
+
+func test9() bool {
+	/*
+		- - - - - - -
+		- - - - - - -
+		- - - - - - -
+		- - - - - - -
+		- - - - - - -
+		- o - o - x x
+		-----------------------------------
+		0 1 2 3 4 5 6
+	*/
+
+	var boardIndex big.Int
+	boardIndex.SetString("98762270025425421618", 10)
+	result := testCaseWrapperBoardIndex(boardIndex, []int{2}, "test9")
+	return result
+
+}
+
 /*
  * TODO: Fix bug with UBC calculation, visit counts of all children in select is 0
  */
@@ -200,6 +280,9 @@ func main() {
 		test5()
 		test6()
 		test7()
+		test8()
+		test9()
+		//test10()
 	}
 	fmt.Printf("Failcount= %d/%d\n", failCount, runCount)
 }
