@@ -30,6 +30,8 @@ func main() {
 	selectedChild = nil
 
 	var game = api.NewConnect4()
+
+	api.MonteCarloCacheInit()
 	//setupGame(game, []int{3, 3, 2, 4, 1, 0, 3, 3, 2, 2, 1, 1, 1, 0, 0, 2, 3, 2, 2, 3, 0, 0})
 	//fmt.Scanln()
 

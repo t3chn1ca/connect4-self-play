@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/big"
 	"math/rand"
+	"shared"
 	"sort"
 )
 
@@ -171,17 +172,12 @@ func (node *Node) GetPi() [MAX_CHILD_NODES]float32 {
 	return pi
 }
 
-type NNOut struct {
-	Value float32
-	P     []float32
-}
-
 const MAX_MCTS_ITERATIONS = 500
 
-func MctsForwardPass(game *Connect4) NNOut {
+func MctsForwardPass(game *Connect4) shared.NNOut {
 	selectedNode := MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, nil, false)
 
-	var nnOut NNOut
+	var nnOut shared.NNOut
 
 	parentNode := selectedNode.parent
 	//The value of this board position is wrt to the player who played to get here

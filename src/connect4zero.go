@@ -59,6 +59,7 @@ func main() {
 	rand.Seed(int64(api.Seed_for_rand))
 	var database db.Database
 	database.CreateTable("mctsWithQVal")
+	api.MonteCarloCacheInit()
 
 	var selectedChild *api.Node
 	var currRootNode *api.Node

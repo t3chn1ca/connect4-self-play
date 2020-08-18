@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"shared"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -18,8 +19,9 @@ func checkErr(err error) {
 }
 
 type Database struct {
-	name string
-	conn *sql.DB
+	name         string
+	connTraining *sql.DB
+	connCache    *sql.DB
 }
 
 type TrainingSample struct {
@@ -32,7 +34,7 @@ type TrainingSample struct {
 func (db *Database) GetLastUid() int32 {
 	sql_str := fmt.Sprintf("SELECT uid from training ORDER BY uid DESC limit 1")
 	//fmt.Printf(" SQL : %s\n", sql_str)
-	rows, err := db.conn.Query(sql_str)
+	rows, err := db.connTraining.Query(sql_str)
 	checkErr(err)
 
 	var uid int32
@@ -47,7 +49,7 @@ func (db *Database) UpdateWinner(lastUid int32, iteration int, playerWon string)
 	//Update Z for winner for current iteration only ( not past trainings iterations )
 	sql_str := fmt.Sprintf("UPDATE training SET z = -1 WHERE uid > %d AND playerToMove = '%s' AND iteration = %d", lastUid, playerWon, iteration)
 	//fmt.Printf(" SQL : %s\n", sql_str)
-	stmt, err := db.conn.Prepare(sql_str)
+	stmt, err := db.connTraining.Prepare(sql_str)
 	checkErr(err)
 
 	_, err = stmt.Exec()
@@ -56,7 +58,7 @@ func (db *Database) UpdateWinner(lastUid int32, iteration int, playerWon string)
 	//Update Z for looser for current iteration only ( not past trainings iterations )
 	sql_str = fmt.Sprintf("UPDATE training SET z = 1 WHERE uid > %d AND playerToMove != '%s' AND iteration = %d", lastUid, playerWon, iteration)
 	//fmt.Printf(" SQL : %s\n", sql_str)
-	stmt, err = db.conn.Prepare(sql_str)
+	stmt, err = db.connTraining.Prepare(sql_str)
 	checkErr(err)
 
 	_, err = stmt.Exec()
@@ -71,7 +73,7 @@ func (db *Database) CreateTable(dbFile string) {
 	checkErr(err)
 	_, err = stmt.Exec()
 	checkErr(err)
-	db.conn = dbCon
+	db.connTraining = dbCon
 }
 
 func (db Database) CreateSample(Pi [7]float64, P []float32, V float32, AvgV float32) TrainingSample {
@@ -92,9 +94,73 @@ func (db Database) Insert(boardIndex big.Int, iteration int, sample TrainingSamp
 	//Insert Z = 0 and other parameters
 	sql_str := fmt.Sprintf("INSERT INTO training(boardIndex, playerToMove, created, iteration, json, z) values('%s', '%s', '%s', %d, '%s', 0)", boardIndex.String(), playerToMove, now.String(), iteration, jsonString)
 	//fmt.Printf(" SQL : %s\n", sql_str)
-	stmt, err := db.conn.Prepare(sql_str)
+	stmt, err := db.connTraining.Prepare(sql_str)
 	checkErr(err)
 
 	_, err = stmt.Exec()
 	checkErr(err)
+}
+
+/*    CACHE Table */
+
+func (db *Database) ClearCache() {
+	sql_str := "DELETE from cache"
+	//fmt.Printf(" SQL : %s\n", sql_str)
+	stmt, err := db.connCache.Prepare(sql_str)
+	checkErr(err)
+	_, err = stmt.Exec()
+	checkErr(err)
+}
+
+func (db *Database) CreateCacheTable(dbFile string) {
+
+	dbCon, err := sql.Open("sqlite3", ":memory:") //""./"+dbFile+".db")
+	checkErr(err)
+
+	stmt, err := dbCon.Prepare("CREATE TABLE IF NOT EXISTS cache(boardIndex TEXT PRIMARY KEY, json TEXT);")
+	checkErr(err)
+	_, err = stmt.Exec()
+	checkErr(err)
+	db.connCache = dbCon
+}
+
+func (db *Database) InsertCacheEntry(boardIndex big.Int, nnOut shared.NNOut) {
+
+	/*//DEBUG
+	return
+	//DEBUG: END*/
+	jsonString, err := json.Marshal(nnOut)
+	checkErr(err)
+	sql_str := fmt.Sprintf("INSERT INTO cache(boardIndex, json) values('%s', '%s')", boardIndex.String(), jsonString)
+	//fmt.Printf(" SQL : %s\n", sql_str)
+	stmt, err := db.connCache.Prepare(sql_str)
+	checkErr(err)
+
+	_, err = stmt.Exec()
+	checkErr(err)
+}
+
+func (db *Database) GetCacheEntry(boardIndex big.Int) (bool, shared.NNOut) {
+
+	var nnOut shared.NNOut
+	var ret bool = false
+
+	/*//DEBUG
+	return false, nnOut
+	//DEBUG: END*/
+	sql_str := fmt.Sprintf("SELECT json from cache where boardIndex = '%s'", boardIndex.String())
+	//fmt.Printf(" SQL : %s\n", sql_str)
+	rows, err := db.connCache.Query(sql_str)
+	checkErr(err)
+
+	var jsonString string = ""
+	for rows.Next() {
+		ret = true
+		rows.Scan(&jsonString)
+		//fmt.Println("Json:" + jsonString)
+		err = json.Unmarshal([]byte(jsonString), &nnOut)
+		checkErr(err)
+	}
+
+	return ret, nnOut
 }

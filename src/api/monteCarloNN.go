@@ -1,6 +1,7 @@
 package api
 
 import (
+	"db"
 	"fmt"
 	"math"
 	"math/big"
@@ -239,22 +240,11 @@ func CloneGame(game *Connect4) *mcts.Connect4 {
 
 var cache []big.Int
 var duplicateCount = 0
+var database db.Database
 
-func checkDuplicateBoardIndex(boardIndex big.Int) {
-	var found bool = false
-	for _, bIndexCache := range cache {
-		if bIndexCache.Cmp(&boardIndex) == 0 {
-			found = true
-			break
-		}
-	}
-
-	if !found {
-		cache = append(cache, boardIndex)
-	} else {
-		duplicateCount++
-		fmt.Printf("%s Duplicate entry!!!!!!!!!!!!!!!!Count = %d\n", boardIndex.String(), duplicateCount)
-	}
+func MonteCarloCacheInit() {
+	database.CreateCacheTable("cache")
+	database.ClearCache()
 }
 
 func MonteCarloTreeSearch(game *Connect4, max_iteration int, serverPort int, root *Node, debug bool, propablisticSampleOfPi bool) *Node {
@@ -272,10 +262,18 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, serverPort int, roo
 		unplayedMoves := game.GetValidMoves()
 		root = &rootNode
 		fmt.Printf("Creating ROOT node playerJustMoved: %s, unplayedMoves %v", game.PlayerToString(playerWhoJustMoved), unplayedMoves)
-		//nnOut := NnForwardPass(game, serverPort)
 
-		mctsGame = CloneGame(game)
-		nnOut := mcts.MctsForwardPass(mctsGame)
+		boardIndex := game.GetBoardIndex()
+		retCode, nnOut := database.GetCacheEntry(boardIndex)
+		if retCode == false {
+			mctsGame = CloneGame(game)
+			nnOut = mcts.MctsForwardPass(mctsGame)
+			//nnOut = NnForwardPass(game, serverPort)
+			database.InsertCacheEntry(boardIndex, nnOut)
+		} else {
+			//boardIndex := game.GetBoardIndex()
+			//fmt.Printf("Cache hit for boardIndex: %s", boardIndex.String())
+		}
 
 		root.init(playerWhoJustMoved, nil, boardIndex, 0, unplayedMoves, 0, nnOut.P, nnOut.Value)
 
@@ -320,15 +318,23 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, serverPort int, roo
 				//Collect state information for new child node creation
 				playerJustMoved := gameTemp.GetPlayerWhoJustMoved()
 				boardIndex = gameTemp.GetBoardIndex()
-				//checkDuplicateBoardIndex(boardIndex)
 				validMoves := gameTemp.GetValidMoves()
 				//fmt.Printf("EXP: action: %d PARENT of the child to be added %p\n", move, node)
 
-				//nnOut := NnForwardPass(&gameTemp, serverPort)
-				mctsGame := CloneGame(&gameTemp)
-				nnOut := mcts.MctsForwardPass(mctsGame)
+				retCode, nnOut := database.GetCacheEntry(boardIndex)
+				if retCode == false {
+					//No cache entry found
+					mctsGame := CloneGame(&gameTemp)
+					nnOut = mcts.MctsForwardPass(mctsGame)
 
-				//fmt.Printf("EXP: Adding Child node playerJustMoved: %s, move: %d, unplayedMoves %v Value = %f\n", game.PlayerToString(playerJustMoved), move, validMoves, nnOut.value)
+					//nnOut = NnForwardPass(&gameTemp, serverPort)
+					//fmt.Println("\nInserting cache entry : " + boardIndex.String())
+					database.InsertCacheEntry(boardIndex, nnOut)
+				} else {
+					//fmt.Println("\nCache hit for boardIndex: " + boardIndex.String())
+				}
+
+				//fmt.Printf("EXP: Adding Child node playerJustMoved: %s, move: %d, unplayedMoves %v Value = %f\n", game.PlayerToString(playerJustMoved), move, validMoves, nnOut.Value)
 				tempNode := node.addChild(playerJustMoved, boardIndex, move, validMoves, node.propActionChildNodes[move], nnOut.P, nnOut.Value)
 				//fmt.Printf("EXP: value of child")
 				//fmt.Printf("Dump parent node: %s\n", node.ToString())
@@ -491,4 +497,24 @@ func softMax(x [MAX_CHILD_NODES]float64) [MAX_CHILD_NODES]float64 {
 
 	return a
 }
+
+
+/*
+func checkDuplicateBoardIndex(boardIndex big.Int) {
+	var found bool = false
+	for _, bIndexCache := range cache {
+		if bIndexCache.Cmp(&boardIndex) == 0 {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		cache = append(cache, boardIndex)
+	} else {
+		duplicateCount++
+		fmt.Printf("%s Duplicate entry!!!!!!!!!!!!!!!!Count = %d\n", boardIndex.String(), duplicateCount)
+	}
+}
+*/
 */

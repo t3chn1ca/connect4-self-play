@@ -4,17 +4,13 @@ import (
 	"context"
 	"fmt"
 	"proto"
+	"shared"
 	"strconv"
 	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 )
-
-type NNOut struct {
-	Value float32
-	P     []float32
-}
 
 var kacp = keepalive.ClientParameters{
 	Time:                10 * time.Second, // send pings every 10 seconds if there is no activity
@@ -158,7 +154,7 @@ func NnTrain(trainFromIndex int32, trainToIndex int32) int32 {
 	return response.Status
 }
 
-func NnForwardPass(game *Connect4, port int) NNOut {
+func NnForwardPass(game *Connect4, port int) shared.NNOut {
 	portStr := "localhost:" + strconv.Itoa(port)
 	conn, err := grpc.Dial(portStr, grpc.WithInsecure()) //, grpc.WithKeepaliveParams(kacp))
 	if err != nil {
@@ -184,7 +180,7 @@ func NnForwardPass(game *Connect4, port int) NNOut {
 		panic(err)
 	}
 
-	var nnOut NNOut
+	var nnOut shared.NNOut
 	//fmt.Printf("Response %v", response.Result)
 
 	nnOut.Value = float32(response.Result[0])
