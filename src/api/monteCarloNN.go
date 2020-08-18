@@ -250,7 +250,7 @@ func MonteCarloCacheInit() {
 func MonteCarloTreeSearch(game *Connect4, max_iteration int, serverPort int, root *Node, debug bool, propablisticSampleOfPi bool) *Node {
 
 	boardIndex := game.GetBoardIndex()
-	fmt.Printf("\nMCTSNN root node index = %s\n", boardIndex.String())
+	//fmt.Printf("\nMCTSNN root node index = %s\n", boardIndex.String())
 	var rootNode Node
 	var mctsGame *mcts.Connect4
 
@@ -261,7 +261,7 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, serverPort int, roo
 		playerWhoJustMoved := game.GetPlayerWhoJustMoved()
 		unplayedMoves := game.GetValidMoves()
 		root = &rootNode
-		fmt.Printf("Creating ROOT node playerJustMoved: %s, unplayedMoves %v", game.PlayerToString(playerWhoJustMoved), unplayedMoves)
+		//fmt.Printf("Creating ROOT node playerJustMoved: %s, unplayedMoves %v", game.PlayerToString(playerWhoJustMoved), unplayedMoves)
 
 		boardIndex := game.GetBoardIndex()
 		retCode, nnOut := database.GetCacheEntry(boardIndex)
@@ -288,6 +288,7 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, serverPort int, roo
 
 	//fmt.Printf("-------->Root node = %p", root)
 	for i := 0; i < max_iteration; i++ {
+		fmt.Printf("\rThinking %.2f%% complete", float32(i*100)/float32(max_iteration))
 		//fmt.Printf("\n\nMCTSNN Iteration: %d ======================================================\n", i)
 		node = root
 		//fmt.Printf("-------->Root node = %p\n", root)
@@ -516,5 +517,4 @@ func checkDuplicateBoardIndex(boardIndex big.Int) {
 		fmt.Printf("%s Duplicate entry!!!!!!!!!!!!!!!!Count = %d\n", boardIndex.String(), duplicateCount)
 	}
 }
-*/
 */
