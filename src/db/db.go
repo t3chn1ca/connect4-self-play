@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"os"
 	"shared"
 	"time"
 
@@ -12,9 +13,14 @@ import (
 )
 
 func checkErr(err error) {
+	if err == sql.ErrNoRows {
+		return
+	}
+
 	if err != nil {
 		fmt.Println("Panic!")
 		panic(err)
+		os.Exit(-1)
 	}
 }
 
@@ -106,22 +112,33 @@ func (db Database) Insert(boardIndex big.Int, iteration int, sample TrainingSamp
 func (db *Database) ClearCache() {
 	sql_str := "DELETE from cache"
 	//fmt.Printf(" SQL : %s\n", sql_str)
-	stmt, err := db.connCache.Prepare(sql_str)
-	checkErr(err)
-	_, err = stmt.Exec()
+	_, err := db.connCache.Exec(sql_str)
 	checkErr(err)
 }
 
 func (db *Database) CreateCacheTable(dbFile string) {
 
-	dbCon, err := sql.Open("sqlite3", ":memory:") //""./"+dbFile+".db")
+	dbCon, err := sql.Open("sqlite3", ":memory:") //":memory:?_sync=0") //""./"+dbFile+".db")
 	checkErr(err)
-
-	stmt, err := dbCon.Prepare("CREATE TABLE IF NOT EXISTS cache(boardIndex TEXT PRIMARY KEY, json TEXT);")
-	checkErr(err)
-	_, err = stmt.Exec()
+	fmt.Println("Creating cache table..")
+	//stmt, err := dbCon.Prepare("CREATE TABLE IF NOT EXISTS cache(boardIndex TEXT PRIMARY KEY, json TEXT);")
+	//checkErr(err)
+	sql_str := "CREATE TABLE IF NOT EXISTS cache(boardIndex TEXT PRIMARY KEY, json TEXT);"
+	_, err = dbCon.Exec(sql_str)
 	checkErr(err)
 	db.connCache = dbCon
+}
+
+func (db *Database) InsertCacheEntries(boardIndexes [8]big.Int, nnOutArray [8]shared.NNOut) {
+
+	for index, boardIndex := range boardIndexes {
+		//retCode, _ := db.GetCacheEntry(boardIndex)
+		//	if retCode == false {
+		db.InsertCacheEntry(boardIndex, nnOutArray[index])
+		//	} else {
+		//fmt.Println("Skipping boardIndex as it already exists " + boardIndex.String())
+		//	}
+	}
 }
 
 func (db *Database) InsertCacheEntry(boardIndex big.Int, nnOut shared.NNOut) {
@@ -129,15 +146,38 @@ func (db *Database) InsertCacheEntry(boardIndex big.Int, nnOut shared.NNOut) {
 	/*//DEBUG
 	return
 	//DEBUG: END*/
+	if db.IsEntryPresent(boardIndex) {
+		//fmt.Printf("BoardIndex %s exists in cache, return\n", boardIndex.String())
+		return
+	}
+
 	jsonString, err := json.Marshal(nnOut)
 	checkErr(err)
-	sql_str := fmt.Sprintf("INSERT INTO cache(boardIndex, json) values('%s', '%s')", boardIndex.String(), jsonString)
+	sql_str := fmt.Sprintf("INSERT INTO cache(boardIndex, json) values('%s', '%s')", boardIndex.String(), string(jsonString))
 	//fmt.Printf(" SQL : %s\n", sql_str)
-	stmt, err := db.connCache.Prepare(sql_str)
+
+	_, err = db.connCache.Exec(sql_str)
+	checkErr(err)
+}
+
+func (db Database) IsEntryPresent(boardIndex big.Int) bool {
+
+	/*//DEBUG
+	return false, nnOut
+	//DEBUG: END*/
+	sql_str := fmt.Sprintf("SELECT COUNT(*) from cache where boardIndex = '%s'", boardIndex.String())
+	//fmt.Printf(" SQL : %s\n", sql_str)
+
+	var count int
+	err := db.connCache.QueryRow(sql_str).Scan(&count)
 	checkErr(err)
 
-	_, err = stmt.Exec()
-	checkErr(err)
+	if count > 0 {
+		return true
+	}
+
+	return false
+
 }
 
 func (db *Database) GetCacheEntry(boardIndex big.Int) (bool, shared.NNOut) {
@@ -148,15 +188,14 @@ func (db *Database) GetCacheEntry(boardIndex big.Int) (bool, shared.NNOut) {
 	/*//DEBUG
 	return false, nnOut
 	//DEBUG: END*/
-	sql_str := fmt.Sprintf("SELECT json from cache where boardIndex = '%s'", boardIndex.String())
+	sql_str := fmt.Sprintf("SELECT json from cache where boardIndex = '%s' limit 1", boardIndex.String())
 	//fmt.Printf(" SQL : %s\n", sql_str)
-	rows, err := db.connCache.Query(sql_str)
+	var jsonString string
+	err := db.connCache.QueryRow(sql_str).Scan(&jsonString)
 	checkErr(err)
 
-	var jsonString string = ""
-	for rows.Next() {
+	if len(jsonString) > 0 {
 		ret = true
-		rows.Scan(&jsonString)
 		//fmt.Println("Json:" + jsonString)
 		err = json.Unmarshal([]byte(jsonString), &nnOut)
 		checkErr(err)
