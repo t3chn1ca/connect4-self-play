@@ -7,6 +7,7 @@ import (
 )
 
 const MAX_MCTS_ITERATIONS = 1500
+const SERVER_PORT = api.TRAIN_SERVER_PORT
 
 func setupGame(game *api.Connect4, moves []int) *api.Connect4 {
 
@@ -23,7 +24,7 @@ func setupGame(game *api.Connect4, moves []int) *api.Connect4 {
 
 func main() {
 
-	//defer profile.Start().Stop()
+	//	defer profile.Start().Stop()
 
 	rand.Seed(int64(api.Seed_for_rand))
 	var selectedChild *api.Node
@@ -38,7 +39,7 @@ func main() {
 	//var firstMoveDone bool = false
 	for {
 
-		selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, selectedChild, false, false)
+		selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, SERVER_PORT, selectedChild, false, false)
 		fmt.Printf("Move played by Player %s = %d\n", game.PlayerToString(game.GetPlayerToMove()), selectedChild.GetAction())
 
 		/*
@@ -59,6 +60,7 @@ func main() {
 			println("GAME OVER")
 			break
 		}
+
 		fmt.Printf("Human move: ")
 		var humanMove int
 		n, _ := fmt.Scanf("%d", &humanMove)

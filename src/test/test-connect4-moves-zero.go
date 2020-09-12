@@ -268,6 +268,7 @@ func test9() bool {
  */
 func main() {
 	rand.Seed(int64(1234))
+	api.MonteCarloCacheInit()
 
 	const repeatTestCount = 1
 

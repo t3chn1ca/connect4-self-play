@@ -28,18 +28,19 @@ import (
 
 
    TODO:
-   1. Integrate sql save, iteration, state, p, pi, v, z to db
+   1. Integrate sql save, gameIteration, state, p, pi, v, z to db
    2. Load training data from python and train nn
 */
 
 //On average there are 23 moves in connect-4 (ref:reddit.com/r/math/comments/1lo4od/how_many_games_of_connect4_there_are/)
 //Create a randomizer which picks random moves in the first 25% (5.75) of the moves
 
-const MAX_MCTS_ITERATIONS = 1000
+const MAX_MCTS_ITERATIONS = 1250
 
 const END_UID_INDEX = -1
 
 const PROPABLISTIC_SAMPLING_FALSE = false
+const PROPABLISTIC_SAMPLING_TRUE = true
 
 //First moves are randomized to create a rich set of diverse games for training, else the games are repetetive due to the NN always responding the same way
 var QUARTER_OF_AVG_MOVES = 2 //Disable random first moves with -1 after some training
@@ -58,8 +59,7 @@ func main() {
 	//defer profile.Start().Stop()
 	rand.Seed(int64(api.Seed_for_rand))
 	var database db.Database
-	database.CreateTable("mctsWithQVal")
-	api.MonteCarloCacheInit()
+	database.CreateTable("mctsWithQVal_iter4")
 
 	var selectedChild *api.Node
 	var currRootNode *api.Node
@@ -67,7 +67,8 @@ func main() {
 
 	selectedChild = nil
 	for {
-
+		//Clear cache beggining of new training
+		api.MonteCarloCacheInit()
 		//In past all samples were used for training, now moved it to last 50 iterations
 		lastUid := database.GetLastUid()
 		log.Printf("LastUid= %d\n", lastUid)
@@ -76,10 +77,10 @@ func main() {
 		selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, selectedChild, false, PROPABLISTIC_SAMPLING_FALSE)
 		//Make a copy of root node for caching, the idea being to pass the existing MCTS back for further iterations
 		mctsRootNode = selectedChild.GetParent()
-		//Set selectedChild to mctsRootNode so that an iteration can start from root
+		//Set selectedChild to mctsRootNode so that an gameIteration can start from root
 		selectedChild = mctsRootNode
-
-		for iteration := 0; iteration < 100; iteration++ {
+		//Play over 200 games with one another and create move samples
+		for gameIteration := 0; gameIteration < 200; gameIteration++ {
 			var move = 0
 			game = api.NewConnect4()
 
@@ -101,17 +102,17 @@ func main() {
 					fmt.Println(currRootNode.ToString())
 					//fmt.Printf("Pi : %v\n", currRootNode.GetPi())
 					sample := database.CreateSample(currRootNode.GetPi(false), currRootNode.GetP(), currRootNode.GetV(), currRootNode.GetQ())
-					database.Insert(currRootNode.GetBoardIndex(), iteration, sample, game.PlayerToString(game.GetPlayerToMove()))
+					database.Insert(currRootNode.GetBoardIndex(), gameIteration, sample, game.PlayerToString(game.GetPlayerToMove()))
 				}
 
 				game.PlayMove(selectedChild.GetAction())
-				fmt.Printf("Iteration: %d\n", iteration)
+				fmt.Printf("gameIteration: %d\n", gameIteration)
 				game.DumpBoard()
 				//fmt.Print("Press 'Enter' to continue...")
 				//fmt.Scanln()
 
 				if game.IsGameOver() {
-					database.UpdateWinner(lastUid, iteration, game.PlayerToString(game.GetPlayerWhoJustMoved()))
+					database.UpdateWinner(lastUid, gameIteration, game.PlayerToString(game.GetPlayerWhoJustMoved()))
 					println("GAME OVER")
 					game.DumpBoard()
 					selectedChild = mctsRootNode
