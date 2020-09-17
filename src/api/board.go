@@ -270,26 +270,28 @@ func (b Connect4) IndexToBoard(boardIndex big.Int) ([maxY][maxX]int64, int64) {
 	const arrayLen = maxY * maxX
 	var countOfMoves int8
 	var nextPlayerToMove int64
-	temp := boardIndex
+	var temp = new(big.Int)
+	//Hack to prevent boardIndex being modifed and ensure temp is a copy not pointer
+	temp, _ = temp.SetString(boardIndex.String(), 10)
 	ternary_ith_pos := new(big.Int)
 
 	for i := 0; i < (maxY * maxX); i++ {
 		//ternary_ith_pos = temp%3
-		ternary_ith_pos = ternary_ith_pos.Mod(&temp, big.NewInt(3))
+		ternary_ith_pos = ternary_ith_pos.Mod(temp, big.NewInt(3))
 		//board[y][x] = ternary_ith_pos
 		//fmt.Printf(" i = %d y = %d x = %d\n", i, i/maxX, i%maxX)
 		var boardSlotValue int64
 		if ternary_ith_pos.Cmp(big.NewInt(1)) == 0 {
-			boardSlotValue = 1
+			boardSlotValue = -1
 			countOfMoves++
 		}
 		if ternary_ith_pos.Cmp(big.NewInt(2)) == 0 {
-			boardSlotValue = -1
+			boardSlotValue = 1
 			countOfMoves++
 		}
 		board[i/maxX][i%maxX] = boardSlotValue
 		//temp = temp/3
-		temp.Div(&temp, big.NewInt(3))
+		temp.Div(temp, big.NewInt(3))
 		//if temp == 0
 		if temp.Cmp(big.NewInt(0)) == 0 {
 			break
