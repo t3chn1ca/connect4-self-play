@@ -129,10 +129,10 @@ func (b *Connect4) GameStatus() int {
 }
 
 // Get all possible board states in the form of flat boards for NNApi
-func (b Connect4) GetValidFlatBoardsFromPosition() ([]byte, [MAX_CHILD_NODES*MAX_CHILD_NODES + 1]big.Int) {
+func (b Connect4) GetValidFlatBoardsFromPosition() ([]byte, [MAX_CHILD_NODES + 1]big.Int) {
 	//7 future board positions + 1 current board position
-	var validFlatBoards [MAX_CHILD_NODES*MAX_CHILD_NODES + 1][]int32
-	var boardIndexes [MAX_CHILD_NODES*MAX_CHILD_NODES + 1]big.Int
+	var validFlatBoards [MAX_CHILD_NODES + 1][]int32
+	var boardIndexes [MAX_CHILD_NODES + 1]big.Int
 
 	validMoves := b.GetValidMoves()
 
