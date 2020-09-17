@@ -54,12 +54,25 @@ func (node *Node) addChild(playerJustMoved int64, childBoardIndex big.Int, actio
 	return &childNode
 }
 
+func (node Node) GetParent() *Node {
+	return node.parent
+}
+
 func (node *Node) getValue() float32 {
 	return ((float32(node.wins) * WIN_VALUE) + (float32(node.draws) * DRAW_VALUE)) / float32(node.VisitCount)
 }
 
 func (node *Node) getChildNodes() []*Node {
 	return node.ChildNodes
+}
+
+/* Pick a random child from children */
+func (node *Node) GetRandomChildNode() *Node {
+	var numChildNodes = len(node.ChildNodes)
+	fmt.Printf("Child nodes to pick from random: %d\n", numChildNodes)
+	var randomChildIndex = rand.Intn(numChildNodes)
+
+	return node.ChildNodes[randomChildIndex]
 }
 
 // Upper bound confidence

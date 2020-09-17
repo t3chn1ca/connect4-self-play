@@ -2,7 +2,9 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"math/big"
 	"proto"
 	"shared"
 	"strconv"
@@ -154,6 +156,55 @@ func NnTrain(trainFromIndex int32, trainToIndex int32) int32 {
 	return response.Status
 }
 
+func NnForwardPassMultiBoard(game *Connect4, port int) ([MAX_CHILD_NODES + 1]shared.NNOut, [MAX_CHILD_NODES + 1]big.Int) {
+	portStr := "localhost:" + strconv.Itoa(port)
+	conn, err := grpc.Dial(portStr, grpc.WithInsecure()) //, grpc.WithKeepaliveParams(kacp))
+	if err != nil {
+		fmt.Println("ERROR!: Connection to server failed, check server is started!")
+		panic(err)
+	}
+
+	client := proto.NewAddServiceClient(conn)
+	boardsJson, boardIndexes := game.GetValidFlatBoardsFromPosition()
+	//fmt.Printf("%s\n", string(boardsJson))
+	//fmt.Printf("%v\n", boardIndexes)
+	req := &proto.MultiBoardRequest{Json: string(boardsJson)}
+	deadlineMs := 1000000
+	//Increase timeout as the server on init takes few secs to return ( its loading nn into GPU memory)
+	clientDeadline := time.Now().Add(time.Duration(deadlineMs) * time.Millisecond)
+	ctx, _ := context.WithDeadline(context.Background(), clientDeadline)
+
+	//ctx, _ := context.WithTimeout(context.Background(), time.Second)
+
+	response, err := client.ForwardPassMultiBoard(ctx, req)
+	conn.Close()
+	if err != nil {
+		fmt.Println("ERROR!: Connection to server failed, check server is started!")
+		panic(err)
+	}
+	//                        7 child + 1 Parent    1v + 7 p's
+	var multiBoardNNResponse [MAX_CHILD_NODES + 1][MAX_CHILD_NODES + 1]float32
+
+	err = json.Unmarshal([]byte(response.Json), &multiBoardNNResponse)
+
+	if err != nil {
+		fmt.Println("ERROR!: Decoding Json for multiboard response")
+		panic(err)
+	}
+
+	var nnOutArray [MAX_CHILD_NODES + 1]shared.NNOut
+	//boardIndex is used to index the 8 boards which are returned by NN
+	for boardIndex := 0; boardIndex < MAX_CHILD_NODES+1; boardIndex++ {
+		nnOutArray[boardIndex].Value = float32(multiBoardNNResponse[boardIndex][0])
+		//actionIndex starts at 1-7, 0th index is used for value
+		for actionIndex := 1; actionIndex <= MAX_CHILD_NODES; actionIndex++ {
+			nnOutArray[boardIndex].P = append(nnOutArray[boardIndex].P, multiBoardNNResponse[boardIndex][actionIndex])
+		}
+	}
+
+	return nnOutArray, boardIndexes
+}
+
 func NnForwardPass(game *Connect4, port int) shared.NNOut {
 	portStr := "localhost:" + strconv.Itoa(port)
 	conn, err := grpc.Dial(portStr, grpc.WithInsecure()) //, grpc.WithKeepaliveParams(kacp))
@@ -184,7 +235,7 @@ func NnForwardPass(game *Connect4, port int) shared.NNOut {
 	//fmt.Printf("Response %v", response.Result)
 
 	nnOut.Value = float32(response.Result[0])
-	for i := 1; i <= 7; i++ {
+	for i := 1; i <= MAX_CHILD_NODES; i++ {
 		//fmt.Println(i)
 		nnOut.P = append(nnOut.P, float32(response.Result[i]))
 	}

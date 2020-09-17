@@ -4,6 +4,8 @@ import (
 	"api"
 	"fmt"
 	"math/rand"
+
+	"github.com/pkg/profile"
 )
 
 const MAX_MCTS_ITERATIONS = 1500
@@ -24,7 +26,7 @@ func setupGame(game *api.Connect4, moves []int) *api.Connect4 {
 
 func main() {
 
-	//	defer profile.Start().Stop()
+	defer profile.Start().Stop()
 
 	rand.Seed(int64(api.Seed_for_rand))
 	var selectedChild *api.Node
@@ -36,22 +38,10 @@ func main() {
 	//setupGame(game, []int{3, 3, 2, 4, 1, 0, 3, 3, 2, 2, 1, 1, 1, 0, 0, 2, 3, 2, 2, 3, 0, 0})
 	//fmt.Scanln()
 
-	//var firstMoveDone bool = false
 	for {
 
 		selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, SERVER_PORT, selectedChild, false, false)
 		fmt.Printf("Move played by Player %s = %d\n", game.PlayerToString(game.GetPlayerToMove()), selectedChild.GetAction())
-
-		/*
-			if firstMoveDone == false {
-				for _, child := range selectedChild.GetParentNode().ChildNodes {
-					if child.GetAction() == 3 {
-						selectedChild = child
-						firstMoveDone = true
-					}
-				}
-			}
-		*/
 
 		game.PlayMove(selectedChild.GetAction())
 		game.DumpBoard()
@@ -60,6 +50,9 @@ func main() {
 			println("GAME OVER")
 			break
 		}
+
+		//DEBUG for profiling
+		break
 
 		fmt.Printf("Human move: ")
 		var humanMove int

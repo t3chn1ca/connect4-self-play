@@ -1,2 +1,2 @@
 Generate protocol specific golang files:
-protoc --go_out=plugins=grpc:. src/proto/service.proto
+protoc --go_out=plugins=grpc:. src/proto/nnService.proto

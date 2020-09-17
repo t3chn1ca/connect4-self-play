@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math/rand"
 	"mcts"
+	"os"
+	"strconv"
 )
 
 //ref: https://github.com/jpbruneton/Alpha-Zero-algorithm-for-Connect-4-game
@@ -13,7 +15,7 @@ import (
 const MAX_MCTS_ITERATIONS_NN = 1500
 const MAX_MCTS_ITERATIONS_MCTS = 2000
 const SERVER_PORT = api.TRAIN_SERVER_PORT
-const QUARTER_OF_AVG_MOVES = 1
+const QUARTER_OF_AVG_MOVES = 2
 
 func setupGame(game *api.Connect4, moves []int) *api.Connect4 {
 
@@ -28,12 +30,21 @@ func setupGame(game *api.Connect4, moves []int) *api.Connect4 {
 
 }
 
-var MAX_TOURNAMENTS = 100
+var MAX_TOURNAMENTS = 30
 
 //TODO: Debug multiple instances of cache created
 func main() {
 
 	//defer profile.Start().Stop()
+	argsWithoutProg := os.Args[1:]
+	if len(argsWithoutProg) > 0 {
+		fmt.Printf("Setting Cpuct variable from arg = %s\n", argsWithoutProg[0])
+		var err error
+		api.C, err = strconv.ParseFloat(argsWithoutProg[0], 32)
+		if err != nil {
+			panic("Incorrect argument for Cpuct")
+		}
+	}
 
 	rand.Seed(int64(api.Seed_for_rand))
 	var selectedChildMcts *mcts.Node
@@ -126,5 +137,5 @@ func main() {
 
 		}
 	}
-	fmt.Printf(" MCTS Wins = %f/%d  NN Wins = %f/%d \n", mctsWinCount, MAX_TOURNAMENTS, nnWinCount, MAX_TOURNAMENTS)
+	fmt.Printf(" MCTS Wins = %f/%d  NN Wins = %f/%d Cpuct = %f\n", mctsWinCount, MAX_TOURNAMENTS, nnWinCount, MAX_TOURNAMENTS, api.C)
 }

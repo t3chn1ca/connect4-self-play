@@ -19,7 +19,7 @@ func checkErr(err error) {
 
 	if err != nil {
 		fmt.Println("Panic!")
-		panic(err)
+		//panic(err)
 		os.Exit(-1)
 	}
 }
@@ -118,7 +118,7 @@ func (db *Database) ClearCache() {
 
 func (db *Database) CreateCacheTable(dbFile string) {
 
-	dbCon, err := sql.Open("sqlite3", ":memory:") //":memory:?_sync=0") //""./"+dbFile+".db")
+	dbCon, err := sql.Open("sqlite3", "file::memory:") //?cache=shared&_sync=0&_mutex=no") //":memory:?_sync=0&_mutex=no") //:?_mutex=no") //":memory:?_sync=0") //""./"+dbFile+".db")
 	checkErr(err)
 	fmt.Println("Creating cache table..")
 	//stmt, err := dbCon.Prepare("CREATE TABLE IF NOT EXISTS cache(boardIndex TEXT PRIMARY KEY, json TEXT);")

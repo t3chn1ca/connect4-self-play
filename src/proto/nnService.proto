@@ -6,6 +6,14 @@ message BoardRequest {
     repeated int32 board = 1;
 }
 
+message MultiBoardRequest {
+  string json = 1;
+}
+
+message MultiBoardResponse {
+  string json = 1;
+}
+
 message TrainFromIndex {
   int32 uidFrom = 1;
   int32 uidTo = 2;
@@ -25,6 +33,7 @@ message NoArg {
 
 service AddService {
   rpc ForwardPass(BoardRequest) returns (NNResponse);
+  rpc ForwardPassMultiBoard(MultiBoardRequest) returns (MultiBoardResponse);
   rpc Train(TrainFromIndex) returns (Status);
   rpc LoadBestModelToCpu(NoArg) returns (Status);
   rpc LoadBestModelToGpu(NoArg) returns (Status);

@@ -5,17 +5,18 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"mcts"
 	"net/http"
 	"strconv"
 )
 
-const MAX_MCTS_ITERATIONS = 2000
+const MAX_MCTS_ITERATIONS = 6000
 
-var selectedChild *api.Node = nil
+var selectedChild *mcts.Node = nil
 
 const DO_FIRST_MOVE = "-1"
 
-var game *api.Connect4
+var game *mcts.Connect4
 
 func enableCors(w *http.ResponseWriter) {
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
@@ -23,7 +24,7 @@ func enableCors(w *http.ResponseWriter) {
 func resetBoard(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Resetting board")
 	enableCors(&w)
-	game = api.NewConnect4()
+	game = mcts.NewConnect4()
 	selectedChild = nil
 }
 
@@ -33,7 +34,7 @@ func playMove(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 	if moves[0] == DO_FIRST_MOVE {
 		fmt.Printf("Doing first move")
-		selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, selectedChild, false, false)
+		selectedChild = mcts.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, selectedChild, false)
 
 	} else {
 
@@ -61,10 +62,10 @@ func playMove(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		//Let AI do its move
-		selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, selectedChild, false, false)
+		selectedChild = mcts.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, selectedChild, false)
 
 	}
-	fmt.Printf("AI move: %d\n", selectedChild.GetAction())
+	fmt.Printf("MCTS move: %d\n", selectedChild.GetAction())
 	game.PlayMove(selectedChild.GetAction())
 	game.DumpBoard()
 	fmt.Fprintf(w, "{\"move\" : %d}", selectedChild.GetAction())
@@ -75,7 +76,7 @@ func main() {
 	//defer profile.Start().Stop()
 	api.MonteCarloCacheInit()
 	rand.Seed(int64(api.Seed_for_rand))
-	game = api.NewConnect4()
+	game = mcts.NewConnect4()
 	http.HandleFunc("/", playMove)
 	http.HandleFunc("/resetBoard", resetBoard)
 	log.Fatal(http.ListenAndServe(":8888", nil))

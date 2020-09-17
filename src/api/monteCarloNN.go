@@ -10,7 +10,7 @@ import (
 	"sort"
 )
 
-var C = 5 //math.Sqrt(2.0) // ref:https://medium.com/oracledevs/lessons-from-alphazero-part-3-parameter-tweaking-4dceb78ed1e5  //math.Sqrt(2.0)
+var C = 1.0 // Used CPuct optimizer on gen4 to find sweet spot //math.Sqrt(2.0) // ref:https://medium.com/oracledevs/lessons-from-alphazero-part-3-parameter-tweaking-4dceb78ed1e5  //math.Sqrt(2.0)
 
 const T = 0.99 //0.5001 // Control exploration with temp, T -> 0 no exploration, T->1 reflects a propablity based on visits
 const MAX_CHILD_NODES = 7
@@ -95,6 +95,7 @@ func (node *Node) GetParentNode() *Node {
 func (node *Node) getUbc() float32 {
 	//Exploration term is high for less visited nodes
 	//If child has been visited relatively less times than other children the exploration term for child goes up
+	//fmt.Printf("Cpuct = %f\n", C)
 	var explorationTerm = float32(C) * node.p * float32(math.Sqrt(float64(node.parent.VisitCount))) / (1 + float32(node.VisitCount))
 	//fmt.Printf("UBC = %f + %f = %f \n", node.getValue(), float32(explorationTerm), (node.getValue() + float32(explorationTerm)))
 	return (node.Q + (float32(explorationTerm)))
@@ -249,13 +250,11 @@ func MonteCarloCacheInit() {
 
 func MonteCarloTreeSearch(game *Connect4, max_iteration int, serverPort int, root *Node, debug bool, propablisticSampleOfPi bool) *Node {
 
-	boardIndex := game.GetBoardIndex()
 	//fmt.Printf("\nMCTSNN root node index = %s\n", boardIndex.String())
 	var rootNode Node
-	var mctsGame *mcts.Connect4
+	//var mctsGame *mcts.Connect4
 
-	//checkDuplicateBoardIndex(boardIndex)
-
+	boardIndex := game.GetBoardIndex()
 	//First time MCT is created if root == nil
 	if root == nil {
 		playerWhoJustMoved := game.GetPlayerWhoJustMoved()
@@ -263,13 +262,20 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, serverPort int, roo
 		root = &rootNode
 		//fmt.Printf("Creating ROOT node playerJustMoved: %s, unplayedMoves %v", game.PlayerToString(playerWhoJustMoved), unplayedMoves)
 
-		boardIndex := game.GetBoardIndex()
 		retCode, nnOut := database.GetCacheEntry(boardIndex)
 		if retCode == false {
-			mctsGame = CloneGame(game)
-			nnOut = mcts.MctsForwardPass(mctsGame)
+			//mctsGame = CloneGame(game)
+			//nnOut = mcts.MctsForwardPass(mctsGame)
+
 			//nnOut = NnForwardPass(game, serverPort)
-			database.InsertCacheEntry(boardIndex, nnOut)
+			//database.InsertCacheEntry(boardIndex, nnOut)
+
+			nnOutArray, boardIndexes := NnForwardPassMultiBoard(game, serverPort)
+			database.InsertCacheEntries(boardIndexes, nnOutArray)
+			if boardIndexes[MAX_CHILD_NODES].Cmp(&boardIndex) != 0 {
+				panic("Board Indexes dont match!!")
+			}
+			nnOut = nnOutArray[MAX_CHILD_NODES] //Last entry is current board Index
 		} else {
 			//boardIndex := game.GetBoardIndex()
 			//fmt.Printf("Cache hit for boardIndex: %s", boardIndex.String())
@@ -323,14 +329,23 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, serverPort int, roo
 				//fmt.Printf("EXP: action: %d PARENT of the child to be added %p\n", move, node)
 
 				retCode, nnOut := database.GetCacheEntry(boardIndex)
-				if retCode == false {
-					//No cache entry found
-					mctsGame := CloneGame(&gameTemp)
-					nnOut = mcts.MctsForwardPass(mctsGame)
+				if retCode == false { //No cache entry found
+
+					//mctsGame := CloneGame(&gameTemp)
+					//nnOut = mcts.MctsForwardPass(mctsGame)
 
 					//nnOut = NnForwardPass(&gameTemp, serverPort)
 					//fmt.Println("\nInserting cache entry : " + boardIndex.String())
-					database.InsertCacheEntry(boardIndex, nnOut)
+					//database.InsertCacheEntry(boardIndex, nnOut)
+					nnOutArray, boardIndexes := NnForwardPassMultiBoard(&gameTemp, serverPort)
+					if boardIndexes[MAX_CHILD_NODES].Cmp(&boardIndex) != 0 {
+						gameTemp.DumpBoard()
+						fmt.Printf("\nBoardIndexes: %v\n", boardIndexes)
+						fmt.Println("Board Index evaluated = " + boardIndex.String() + " boardIndexes[MAX_CHILD_NODES] = " + boardIndexes[MAX_CHILD_NODES].String() + "\n")
+						panic("Board Indexes dont match!!")
+					}
+					database.InsertCacheEntries(boardIndexes, nnOutArray)
+					nnOut = nnOutArray[MAX_CHILD_NODES] //Last entry is current board Index
 				} else {
 					//fmt.Println("\nCache hit for boardIndex: " + boardIndex.String())
 				}

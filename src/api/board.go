@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"math/rand"
@@ -33,6 +34,7 @@ type Connect4 struct {
 	nextPlayerToMove  int64
 	gameOver          bool
 	reward            [2]int //one for each player
+	boardIndex        big.Int
 }
 
 var RandomNumGenerator *rand.Rand
@@ -126,8 +128,44 @@ func (b *Connect4) GameStatus() int {
 
 }
 
-// Get all possible board states from current move
-func (b Connect4) GetValidBoardIndexesFromMove() [MAX_CHILD_NODES]big.Int {
+// Get all possible board states in the form of flat boards for NNApi
+func (b Connect4) GetValidFlatBoardsFromPosition() ([]byte, [MAX_CHILD_NODES*MAX_CHILD_NODES + 1]big.Int) {
+	//7 future board positions + 1 current board position
+	var validFlatBoards [MAX_CHILD_NODES*MAX_CHILD_NODES + 1][]int32
+	var boardIndexes [MAX_CHILD_NODES*MAX_CHILD_NODES + 1]big.Int
+
+	validMoves := b.GetValidMoves()
+
+	for _, action := range validMoves {
+		var boardTemp Connect4 = b
+		//fmt.Printf("Playing Action: %d\n", action)
+		boardTemp.PlayMove(action)
+		validFlatBoards[action] = boardTemp.GetBoardFlatInt32()
+		boardIndexes[action] = boardTemp.GetBoardIndex()
+		//fmt.Printf("Board Index = %s\n", boardIndexes[action].String())
+	}
+
+	//Create flat boards for invalid moves so that the NN does not panic on null boards
+	invalidMoves := b.GetInvalidMoves()
+	var emptyBoard Connect4
+	for _, action := range invalidMoves {
+		validFlatBoards[action] = emptyBoard.GetBoardFlatInt32()
+	}
+
+	//Last entry is the current boardIndex
+	validFlatBoards[MAX_CHILD_NODES] = b.GetBoardFlatInt32()
+	boardIndexes[MAX_CHILD_NODES] = b.GetBoardIndex()
+
+	jsonByte, err := json.Marshal(validFlatBoards)
+	if err != nil {
+		fmt.Println("ERROR!: Connection to server failed, check server is started!")
+		panic(err)
+	}
+	return jsonByte, boardIndexes
+}
+
+// Get all possible board states from current position
+func (b Connect4) GetValidBoardIndexesFromPosition() [MAX_CHILD_NODES]big.Int {
 	var validBoardIndexes [MAX_CHILD_NODES]big.Int
 	validMoves := b.GetValidMoves()
 
@@ -137,6 +175,16 @@ func (b Connect4) GetValidBoardIndexesFromMove() [MAX_CHILD_NODES]big.Int {
 		validBoardIndexes[action] = boardTemp.GetBoardIndex()
 	}
 	return validBoardIndexes
+}
+
+func (b Connect4) GetInvalidMoves() []int {
+	var invalidMoves []int
+	for x := 0; x < maxX; x++ {
+		if b.board[0][x] != 0 {
+			invalidMoves = append(invalidMoves, x)
+		}
+	}
+	return invalidMoves
 }
 
 func (b Connect4) GetValidMoves() []int {
@@ -189,8 +237,7 @@ func (b Connect4) IsGameOver() bool {
 	return b.gameOver
 }
 
-//TODO: Fix board index
-func (b Connect4) GetBoardIndex() big.Int {
+func (b *Connect4) calculateBoardIndex() big.Int {
 	board := b.GetBoard()
 	boardIndex := new(big.Int)
 	posIndex := new(big.Int)
@@ -210,6 +257,11 @@ func (b Connect4) GetBoardIndex() big.Int {
 		}
 	}
 	return *boardIndex
+}
+
+//TODO: Fix board index
+func (b Connect4) GetBoardIndex() big.Int {
+	return b.calculateBoardIndex()
 }
 
 func (b Connect4) IndexToBoard(boardIndex big.Int) ([maxY][maxX]int64, int64) {
@@ -324,6 +376,7 @@ func (b *Connect4) PlayMove(x int) int {
 		b.playerMadeBadMove = true
 	}
 	b.nextPlayerToMove *= -1
+
 	//b.DumpBoard()
 	return b.GameStatus()
 
