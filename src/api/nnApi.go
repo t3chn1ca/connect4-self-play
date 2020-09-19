@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"proto"
 	"shared"
 	"strconv"
@@ -156,7 +155,7 @@ func NnTrain(trainFromIndex int32, trainToIndex int32) int32 {
 	return response.Status
 }
 
-func NnForwardPassMultiBoard(game *Connect4, port int) ([MAX_CHILD_NODES + 1]shared.NNOut, [MAX_CHILD_NODES + 1]big.Int) {
+func NnForwardPassMultiBoard(game *Connect4, port int) ([MAX_CHILD_NODES + 1]shared.NNOut, [MAX_CHILD_NODES + 1]string) {
 	portStr := "localhost:" + strconv.Itoa(port)
 	conn, err := grpc.Dial(portStr, grpc.WithInsecure()) //, grpc.WithKeepaliveParams(kacp))
 	if err != nil {

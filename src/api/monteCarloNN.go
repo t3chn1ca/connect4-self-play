@@ -4,7 +4,6 @@ import (
 	"db"
 	"fmt"
 	"math"
-	"math/big"
 	"math/rand"
 	"mcts"
 	"sort"
@@ -20,7 +19,7 @@ const MAX_CHILD_NODES = 7
 // Z & v are from the perspective of the player who is in this node(state) and about to make move
 type Node struct {
 	parent        *Node
-	boardIndex    big.Int
+	boardIndex    string
 	ChildNodes    []*Node
 	unplayedMoves []int
 	//Player who moved to get to this state
@@ -48,7 +47,7 @@ func (node *Node) update(v float32) {
 	node.Q = (node.vTotal / float32(node.VisitCount))
 }
 
-func (node *Node) init(playerJustMoved int64, parent *Node, boardIndex big.Int, action int, unplayedMoves []int, propablityOfAction float32,
+func (node *Node) init(playerJustMoved int64, parent *Node, boardIndex string, action int, unplayedMoves []int, propablityOfAction float32,
 	propablityActionsOfChildNodes []float32, value float32) {
 
 	node.action = action
@@ -67,7 +66,7 @@ func (node *Node) init(playerJustMoved int64, parent *Node, boardIndex big.Int, 
 	//fmt.Printf("---->Adding child with parent %p\n", parent)
 }
 
-func (node *Node) addChild(playerJustMoved int64, childBoardIndex big.Int, action int, childUnplayedMoves []int, propablityOfAction float32,
+func (node *Node) addChild(playerJustMoved int64, childBoardIndex string, action int, childUnplayedMoves []int, propablityOfAction float32,
 	propablityActionsOfChild []float32, value float32) *Node {
 	var unplayedMovesAfterRemoval []int
 	for _, move := range node.unplayedMoves {
@@ -112,7 +111,7 @@ Pi[7] , where index is action
 func (node *Node) GetPi(printDebug bool) [MAX_CHILD_NODES]float64 {
 	var pi [MAX_CHILD_NODES]float64
 	if printDebug == true {
-		fmt.Printf("Go Zero boardIndex = %s\n", node.boardIndex.String())
+		fmt.Printf("Go Zero boardIndex = %s\n", node.boardIndex)
 		fmt.Printf("==========Go Zero==ToPlay: %s==========\n", PlayerToString(node.playerJustMoved*-1))
 	}
 	for _, childNode := range node.ChildNodes {
@@ -155,7 +154,7 @@ func (node *Node) GetP() []float32 {
 	return node.propActionChildNodes
 }
 
-func (node *Node) GetBoardIndex() big.Int {
+func (node *Node) GetBoardIndex() string {
 	return node.boardIndex
 }
 
@@ -174,10 +173,10 @@ func (node *Node) GetV() float32 {
 func (node *Node) ToString() string {
 
 	if node.parent == nil {
-		return "Parent Node, VisitCount:" + fmt.Sprint(node.VisitCount) + " Board Index: " + node.boardIndex.String()
+		return "Parent Node, VisitCount:" + fmt.Sprint(node.VisitCount) + " Board Index: " + node.boardIndex
 	}
 	out := fmt.Sprintf("VisitCount: %d :Action:%d, BoardIndex:%s len(childNodes):%d unplayedMvs:%d playerJustMvd:%s v: %f visitCount: %d Q: %f UBC=%f\n", node.VisitCount, node.action,
-		node.boardIndex.String(), len(node.ChildNodes), node.unplayedMoves, PlayerToString(node.playerJustMoved), node.v, node.VisitCount, node.Q, node.getUbc())
+		node.boardIndex, len(node.ChildNodes), node.unplayedMoves, PlayerToString(node.playerJustMoved), node.v, node.VisitCount, node.Q, node.getUbc())
 	/*  Print parent and child
 	out += fmt.Sprintf("Parent: %p\n", node.parent)
 	for i := 0; i < len(node.ChildNodes); i++ {
@@ -239,7 +238,6 @@ func CloneGame(game *Connect4) *mcts.Connect4 {
 	return &mctsGame
 }
 
-var cache []big.Int
 var duplicateCount = 0
 var database db.Database
 
@@ -272,7 +270,7 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, serverPort int, roo
 
 			nnOutArray, boardIndexes := NnForwardPassMultiBoard(game, serverPort)
 			database.InsertCacheEntries(boardIndexes, nnOutArray)
-			if boardIndexes[MAX_CHILD_NODES].Cmp(&boardIndex) != 0 {
+			if boardIndexes[MAX_CHILD_NODES] != boardIndex {
 				panic("Board Indexes dont match!!")
 			}
 			nnOut = nnOutArray[MAX_CHILD_NODES] //Last entry is current board Index
@@ -338,10 +336,10 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, serverPort int, roo
 					//fmt.Println("\nInserting cache entry : " + boardIndex.String())
 					//database.InsertCacheEntry(boardIndex, nnOut)
 					nnOutArray, boardIndexes := NnForwardPassMultiBoard(&gameTemp, serverPort)
-					if boardIndexes[MAX_CHILD_NODES].Cmp(&boardIndex) != 0 {
+					if boardIndexes[MAX_CHILD_NODES] != boardIndex {
 						gameTemp.DumpBoard()
 						fmt.Printf("\nBoardIndexes: %v\n", boardIndexes)
-						fmt.Println("Board Index evaluated = " + boardIndex.String() + " boardIndexes[MAX_CHILD_NODES] = " + boardIndexes[MAX_CHILD_NODES].String() + "\n")
+						fmt.Println("Board Index evaluated = " + boardIndex + " boardIndexes[MAX_CHILD_NODES] = " + boardIndexes[MAX_CHILD_NODES] + "\n")
 						panic("Board Indexes dont match!!")
 					}
 					database.InsertCacheEntries(boardIndexes, nnOutArray)

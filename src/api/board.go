@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"math/rand"
 )
 
@@ -34,12 +33,12 @@ type Connect4 struct {
 	nextPlayerToMove  int64
 	gameOver          bool
 	reward            [2]int //one for each player
-	boardIndex        big.Int
+	boardIndex        string
 }
 
 var RandomNumGenerator *rand.Rand
 
-func NewConnect4FromIndex(boardIndex big.Int) *Connect4 {
+func NewConnect4FromIndex(boardIndex string) *Connect4 {
 	connect4 := new(Connect4)
 	connect4.board, connect4.nextPlayerToMove = connect4.IndexToBoard(boardIndex)
 	connect4.gameOver = false
@@ -129,10 +128,10 @@ func (b *Connect4) GameStatus() int {
 }
 
 // Get all possible board states in the form of flat boards for NNApi
-func (b Connect4) GetValidFlatBoardsFromPosition() ([]byte, [MAX_CHILD_NODES + 1]big.Int) {
+func (b Connect4) GetValidFlatBoardsFromPosition() ([]byte, [MAX_CHILD_NODES + 1]string) {
 	//7 future board positions + 1 current board position
 	var validFlatBoards [MAX_CHILD_NODES + 1][]int32
-	var boardIndexes [MAX_CHILD_NODES + 1]big.Int
+	var boardIndexes [MAX_CHILD_NODES + 1]string
 
 	validMoves := b.GetValidMoves()
 
@@ -165,8 +164,8 @@ func (b Connect4) GetValidFlatBoardsFromPosition() ([]byte, [MAX_CHILD_NODES + 1
 }
 
 // Get all possible board states from current position
-func (b Connect4) GetValidBoardIndexesFromPosition() [MAX_CHILD_NODES]big.Int {
-	var validBoardIndexes [MAX_CHILD_NODES]big.Int
+func (b Connect4) GetValidBoardIndexesFromPosition() [MAX_CHILD_NODES]string {
+	var validBoardIndexes [MAX_CHILD_NODES]string
 	validMoves := b.GetValidMoves()
 
 	for _, action := range validMoves {
@@ -237,66 +236,59 @@ func (b Connect4) IsGameOver() bool {
 	return b.gameOver
 }
 
-func (b *Connect4) calculateBoardIndex() big.Int {
+func (b *Connect4) calculateBoardIndex() string {
 	board := b.GetBoard()
-	boardIndex := new(big.Int)
-	posIndex := new(big.Int)
+	boardIndex := ""
 	//fmt.Printf("Board: %v\n", board)
 	for y := 0; y < 6; y++ {
 		for x := 0; x < maxX; x++ {
-			var posVal big.Int
-			//posVal = 3^posIndex
-			posVal.Exp(big.NewInt(3), posIndex, big.NewInt(0)) // * float64(board[y][x])
-			//fmt.Printf("posIndex: %d boardVal %d posVal: %d \n", posIndex, board[y][x], posVal)
-			//posVal *= board[y][x]
-			posVal.Mul(&posVal, big.NewInt(board[y][x]))
-			//boardIndex += posVal
-			boardIndex.Add(boardIndex, &posVal)
-			//posIndex++
-			posIndex.Add(posIndex, big.NewInt(1))
+			if board[y][x] == 0 {
+				boardIndex += "0"
+			}
+
+			if board[y][x] == 1 {
+				boardIndex += "1"
+			}
+			if board[y][x] == 2 {
+				boardIndex += "2"
+			}
+
 		}
 	}
-	return *boardIndex
+	return boardIndex
 }
 
 //TODO: Fix board index
-func (b Connect4) GetBoardIndex() big.Int {
+func (b Connect4) GetBoardIndex() string {
 	return b.calculateBoardIndex()
 }
 
-func (b Connect4) IndexToBoard(boardIndex big.Int) ([maxY][maxX]int64, int64) {
+func (b Connect4) IndexToBoard(boardIndex string) ([maxY][maxX]int64, int64) {
 	//var board [maxY * maxX]int64
 	var board [maxY][maxX]int64
 	const arrayLen = maxY * maxX
 	var countOfMoves int8
 	var nextPlayerToMove int64
-	var temp = new(big.Int)
-	//Hack to prevent boardIndex being modifed and ensure temp is a copy not pointer
-	temp, _ = temp.SetString(boardIndex.String(), 10)
-	ternary_ith_pos := new(big.Int)
 
 	for i := 0; i < (maxY * maxX); i++ {
-		//ternary_ith_pos = temp%3
-		ternary_ith_pos = ternary_ith_pos.Mod(temp, big.NewInt(3))
-		//board[y][x] = ternary_ith_pos
 		//fmt.Printf(" i = %d y = %d x = %d\n", i, i/maxX, i%maxX)
 		var boardSlotValue int64
-		if ternary_ith_pos.Cmp(big.NewInt(1)) == 0 {
+		if boardIndex[i] == '1' {
 			boardSlotValue = -1
 			countOfMoves++
 		}
-		if ternary_ith_pos.Cmp(big.NewInt(2)) == 0 {
+		if boardIndex[i] == '2' {
 			boardSlotValue = 1
 			countOfMoves++
 		}
-		board[i/maxX][i%maxX] = boardSlotValue
-		//temp = temp/3
-		temp.Div(temp, big.NewInt(3))
-		//if temp == 0
-		if temp.Cmp(big.NewInt(0)) == 0 {
-			break
+
+		if boardIndex[i] == '0' {
+			boardSlotValue = 0
+			countOfMoves++
 		}
+		board[i/maxX][i%maxX] = boardSlotValue
 	}
+
 	if countOfMoves%2 == 0 {
 		//If its even any player could move next, will pick 1 for convinience
 		nextPlayerToMove = PLAYER_1

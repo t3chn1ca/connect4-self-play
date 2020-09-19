@@ -2,7 +2,6 @@ package mcts
 
 import (
 	"fmt"
-	"math/big"
 )
 
 const (
@@ -177,48 +176,53 @@ func (b Connect4) IsGameOver() bool {
 }
 
 //TODO: Fix board index
-func (b Connect4) GetBoardIndex() big.Int {
+func (b Connect4) GetBoardIndex() string {
 	board := b.GetBoard()
-	boardIndex := new(big.Int)
-	posIndex := new(big.Int)
+	boardIndex := ""
 	//fmt.Printf("Board: %v\n", board)
 	for y := 0; y < 6; y++ {
 		for x := 0; x < maxX; x++ {
-			var posVal big.Int
-			//posVal = 3^posIndex
-			posVal.Exp(big.NewInt(3), posIndex, big.NewInt(0)) // * float64(board[y][x])
-			//fmt.Printf("posIndex: %d boardVal %d posVal: %d \n", posIndex, board[y][x], posVal)
-			//posVal *= board[y][x]
-			posVal.Mul(&posVal, big.NewInt(board[y][x]))
-			//boardIndex += posVal
-			boardIndex.Add(boardIndex, &posVal)
-			//posIndex++
-			posIndex.Add(posIndex, big.NewInt(1))
+			if board[y][x] == 0 {
+				boardIndex += "0"
+			}
+
+			if board[y][x] == 1 {
+				boardIndex += "1"
+			}
+			if board[y][x] == 2 {
+				boardIndex += "2"
+			}
+
 		}
 	}
-	return *boardIndex
+	return boardIndex
 }
 
 //TODO: Fix board index
-func (b Connect4) IndexToBoard(boardIndex big.Int) [maxY * maxX]int64 {
+func (b Connect4) IndexToBoard(boardIndex string) [maxY * maxX]int64 {
+	//var board [maxY * maxX]int64
 	var board [maxY * maxX]int64
 	const arrayLen = maxY * maxX
-	temp := boardIndex
-	ternary_ith_pos := new(big.Int)
+	var countOfMoves int8
 
-	for i := 0; i < (6 * maxX); i++ {
-		//ternary_ith_pos = temp%3
-		ternary_ith_pos = ternary_ith_pos.Mod(&temp, big.NewInt(3))
-		//board[i] = ternary_ith_pos
-		board[i] = ternary_ith_pos.Int64()
-		//temp = temp/3
-		temp.Div(&temp, big.NewInt(3))
-		//if temp == 0
-		if temp.Cmp(big.NewInt(0)) == 0 {
-			break
+	for i := 0; i < (maxY * maxX); i++ {
+		//fmt.Printf(" i = %d y = %d x = %d\n", i, i/maxX, i%maxX)
+		var boardSlotValue int64
+		if boardIndex[i] == '1' {
+			boardSlotValue = -1
+			countOfMoves++
 		}
-	}
+		if boardIndex[i] == '2' {
+			boardSlotValue = 1
+			countOfMoves++
+		}
 
+		if boardIndex[i] == '0' {
+			boardSlotValue = 0
+			countOfMoves++
+		}
+		board[i] = boardSlotValue
+	}
 	return board
 }
 

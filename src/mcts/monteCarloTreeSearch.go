@@ -3,7 +3,6 @@ package mcts
 import (
 	"fmt"
 	"math"
-	"math/big"
 	"math/rand"
 	"shared"
 	"sort"
@@ -21,7 +20,7 @@ const MAX_CHILD_NODES = 7
 type Node struct {
 	action        int //Action taken by parent to get to this node
 	parent        *Node
-	boardIndex    big.Int
+	boardIndex    string
 	ChildNodes    []*Node
 	unplayedMoves []int
 	//Player who moved to get to this state
@@ -31,7 +30,7 @@ type Node struct {
 	draws           int
 }
 
-func (node *Node) init(playerJustMoved int64, parent *Node, boardIndex big.Int, action int, unplayedMoves []int) {
+func (node *Node) init(playerJustMoved int64, parent *Node, boardIndex string, action int, unplayedMoves []int) {
 	node.action = action
 	node.parent = parent
 	node.boardIndex = boardIndex
@@ -40,7 +39,7 @@ func (node *Node) init(playerJustMoved int64, parent *Node, boardIndex big.Int, 
 	//fmt.Printf("---->Adding child with parent %p\n", parent)
 }
 
-func (node *Node) addChild(playerJustMoved int64, childBoardIndex big.Int, action int, childUnplayedMoves []int) *Node {
+func (node *Node) addChild(playerJustMoved int64, childBoardIndex string, action int, childUnplayedMoves []int) *Node {
 	var unplayedMovesAfterRemoval []int
 	for _, move := range node.unplayedMoves {
 		if move != action {
@@ -129,7 +128,7 @@ func PlayerToString(player int64) string {
 
 func (node *Node) toString() string {
 	out := fmt.Sprintf("%p :Action:%d, BoardIndex:%s len(childNodes):%d unplayedMvs:%d playerJstMoved:%s W+D/V: %d/%d =%f \n", node, node.action,
-		node.boardIndex.String(), len(node.ChildNodes), node.unplayedMoves, PlayerToString(node.playerJustMoved), node.wins+node.draws, node.VisitCount, float32(node.wins+node.draws)/float32(node.VisitCount))
+		node.boardIndex, len(node.ChildNodes), node.unplayedMoves, PlayerToString(node.playerJustMoved), node.wins+node.draws, node.VisitCount, float32(node.wins+node.draws)/float32(node.VisitCount))
 	/*  Print parent and child
 	out += fmt.Sprintf("Parent: %p\n", node.parent)
 	for i := 0; i < len(node.ChildNodes); i++ {
