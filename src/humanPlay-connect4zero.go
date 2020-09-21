@@ -2,12 +2,16 @@ package main
 
 import (
 	"api"
+	"flag"
 	"fmt"
+	"log"
 	"math/rand"
+	"os"
+	"runtime/pprof"
 	"time"
 )
 
-const MAX_MCTS_ITERATIONS = 1500
+const MAX_MCTS_ITERATIONS = 500
 const SERVER_PORT = api.TRAIN_SERVER_PORT
 
 func setupGame(game *api.Connect4, moves []int) *api.Connect4 {
@@ -23,10 +27,23 @@ func setupGame(game *api.Connect4, moves []int) *api.Connect4 {
 
 }
 
+var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+
 func main() {
 
 	//defer profile.Start().Stop()
-
+	flag.Parse()
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal("could not create CPU profile: ", err)
+		}
+		defer f.Close()
+		if err := pprof.StartCPUProfile(f); err != nil {
+			log.Fatal("could not start CPU profile: ", err)
+		}
+		defer pprof.StopCPUProfile()
+	}
 	rand.Seed(int64(api.Seed_for_rand))
 	var selectedChild *api.Node
 	selectedChild = nil
@@ -54,7 +71,7 @@ func main() {
 		}
 
 		//DEBUG for profiling
-		//break
+		break
 
 		fmt.Printf("Human move: ")
 		var humanMove int

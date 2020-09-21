@@ -145,10 +145,10 @@ func (db *Database) InsertCacheEntry(boardIndex string, nnOut shared.NNOut) {
 	/*//DEBUG
 	return
 	//DEBUG: END*/
-	/*if db.IsEntryPresent(boardIndex) {
-		//fmt.Printf("BoardIndex %s exists in cache, return\n", boardIndex.String())
-		return
-	}*/
+	//if db.IsEntryPresent(boardIndex) {
+	//fmt.Printf("BoardIndex %s exists in cache, return\n", boardIndex.String())
+	//	return
+	//}
 
 	jsonString, err := json.Marshal(nnOut)
 	checkErr(err)
@@ -160,7 +160,6 @@ func (db *Database) InsertCacheEntry(boardIndex string, nnOut shared.NNOut) {
 }
 
 func (db Database) IsEntryPresent(boardIndex string) bool {
-
 	/*//DEBUG
 	return false, nnOut
 	//DEBUG: END*/

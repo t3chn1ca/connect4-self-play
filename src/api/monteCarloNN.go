@@ -246,6 +246,9 @@ func MonteCarloCacheInit() {
 	database.ClearCache()
 }
 
+var mctsIterations = 0
+var cacheHits = 0
+
 func MonteCarloTreeSearch(game *Connect4, max_iteration int, serverPort int, root *Node, debug bool, propablisticSampleOfPi bool) *Node {
 
 	//fmt.Printf("\nMCTSNN root node index = %s\n", boardIndex.String())
@@ -325,7 +328,7 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, serverPort int, roo
 				boardIndex = gameTemp.GetBoardIndex()
 				validMoves := gameTemp.GetValidMoves()
 				//fmt.Printf("EXP: action: %d PARENT of the child to be added %p\n", move, node)
-
+				mctsIterations++
 				retCode, nnOut := database.GetCacheEntry(boardIndex)
 				if retCode == false { //No cache entry found
 
@@ -345,6 +348,7 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, serverPort int, roo
 					database.InsertCacheEntries(boardIndexes, nnOutArray)
 					nnOut = nnOutArray[MAX_CHILD_NODES] //Last entry is current board Index
 				} else {
+					cacheHits++
 					//fmt.Println("\nCache hit for boardIndex: " + boardIndex.String())
 				}
 
@@ -410,8 +414,8 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, serverPort int, roo
 	pi := root.GetPi(true)
 	//fmt.Printf("Pis : %v\n", pi)
 	fmt.Printf("Position win pc = %f\n", root.Q*100)
-
-	//TODO: Sampled move might not exist as a child node, As even 0 (e^0 = 1) values result in positive propablity with softmax
+	fmt.Printf("Cache hit PC = %f\n", 100*float32(cacheHits)/float32(mctsIterations))
+	//TODO: Sampled move might not exist for a child node, As even 0 (e^0 = 1) values result in positive propablity with softmax
 	//Softmax might not be a good idea for picking moves from pi, need a function which returns zero for zero pi values,
 	//so that valid moves are only sampled
 	var moveSampled int
