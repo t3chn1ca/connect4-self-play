@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-const MAX_MCTS_ITERATIONS = 500
+const MAX_MCTS_ITERATIONS = 1498
 const SERVER_PORT = api.TRAIN_SERVER_PORT
 
 func setupGame(game *api.Connect4, moves []int) *api.Connect4 {
@@ -61,17 +61,19 @@ func main() {
 		fmt.Printf("Move played by Player %s = %d\n", game.PlayerToString(game.GetPlayerToMove()), selectedChild.GetAction())
 		duration := time.Since(start)
 
-		fmt.Printf("MCTS took %f long\n", duration.Seconds())
+		fmt.Printf("MCTS (%d) took %f long\n", MAX_MCTS_ITERATIONS, duration.Seconds())
 		game.PlayMove(selectedChild.GetAction())
 		game.DumpBoard()
 		fmt.Printf("\a")
 		if game.IsGameOver() {
 			println("GAME OVER")
+			api.MonteCarloCacheSyncToFile()
 			break
 		}
 
 		//DEBUG for profiling
-		break
+		//go api.MonteCarloCacheSyncToFile()
+		//break
 
 		fmt.Printf("Human move: ")
 		var humanMove int
@@ -83,6 +85,7 @@ func main() {
 		game.DumpBoard()
 		if game.IsGameOver() {
 			println("GAME OVER")
+			api.MonteCarloCacheSyncToFile()
 			break
 		}
 		if selectedChild != nil {

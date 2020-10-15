@@ -35,7 +35,7 @@ import (
 //On average there are 23 moves in connect-4 (ref:reddit.com/r/math/comments/1lo4od/how_many_games_of_connect4_there_are/)
 //Create a randomizer which picks random moves in the first 25% (5.75) of the moves
 
-const MAX_MCTS_ITERATIONS = 1250
+const MAX_MCTS_ITERATIONS = 2000
 
 const END_UID_INDEX = -1
 
@@ -113,6 +113,7 @@ func main() {
 
 				if game.IsGameOver() {
 					database.UpdateWinner(lastUid, gameIteration, game.PlayerToString(game.GetPlayerWhoJustMoved()))
+					api.MonteCarloCacheSyncToFile()
 					println("GAME OVER")
 					game.DumpBoard()
 					selectedChild = mctsRootNode

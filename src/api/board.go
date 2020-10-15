@@ -240,7 +240,7 @@ func (b *Connect4) calculateBoardIndex() string {
 	board := b.GetBoard()
 	boardIndex := ""
 	//fmt.Printf("Board: %v\n", board)
-	for y := 0; y < 6; y++ {
+	for y := 0; y < maxY; y++ {
 		for x := 0; x < maxX; x++ {
 			if board[y][x] == 0 {
 				boardIndex += "0"
@@ -256,6 +256,19 @@ func (b *Connect4) calculateBoardIndex() string {
 		}
 	}
 	return boardIndex
+}
+
+func GetBoardIndexMirror(boardIndex string) string {
+	boardIndexRune := []rune(boardIndex)
+	for y := 0; y < maxY; y++ {
+		for x := 0; x <= (maxX/2)-1; x++ { // only check from 0-2
+			temp := boardIndexRune[y*maxX+x]
+			fmt.Printf(" boardIndexRune[%d] = boardIndexRune[%d] \n", y*maxX+x, ((y+1)*maxX)-x-1)
+			boardIndexRune[y*maxX+x] = boardIndexRune[((y+1)*maxX)-x-1]
+			boardIndexRune[((y+1)*maxX)-x-1] = temp
+		}
+	}
+	return string(boardIndexRune)
 }
 
 //TODO: Fix board index

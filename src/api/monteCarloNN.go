@@ -242,12 +242,18 @@ var duplicateCount = 0
 var database db.Database
 
 func MonteCarloCacheInit() {
-	database.CreateCacheTable("cache")
-	database.ClearCache()
+	database.CreateCacheTableMemory()
+	database.CreateCacheTableFile()
+	database.SyncFileDbToMemoryDb()
+}
+
+func MonteCarloCacheSyncToFile() {
+	database.SyncMemoryDbToFileDb()
 }
 
 var mctsIterations = 0
 var cacheHits = 0
+var MctsIterationPercent float32 = 0.0
 
 func MonteCarloTreeSearch(game *Connect4, max_iteration int, serverPort int, root *Node, debug bool, propablisticSampleOfPi bool) *Node {
 
@@ -262,7 +268,8 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, serverPort int, roo
 		unplayedMoves := game.GetValidMoves()
 		root = &rootNode
 		//fmt.Printf("Creating ROOT node playerJustMoved: %s, unplayedMoves %v", game.PlayerToString(playerWhoJustMoved), unplayedMoves)
-
+		//Wait for pending cache entry adds to finish
+		//No wait required for first call of GetCacheEntry
 		retCode, nnOut := database.GetCacheEntry(boardIndex)
 		if retCode == false {
 			//mctsGame = CloneGame(game)
@@ -292,10 +299,11 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, serverPort int, roo
 		}
 	}
 	var node *Node
-
+	MctsIterationPercent = 0
 	//fmt.Printf("-------->Root node = %p", root)
 	for i := 0; i < max_iteration; i++ {
 		fmt.Printf("\rThinking %.2f%% complete", float32(i*100)/float32(max_iteration))
+		MctsIterationPercent = float32(i*100) / float32(max_iteration)
 		//fmt.Printf("\n\nMCTSNN Iteration: %d ======================================================\n", i)
 		node = root
 		//fmt.Printf("-------->Root node = %p\n", root)
@@ -307,6 +315,7 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, serverPort int, roo
 		//Select, if all possible moves have been played, ie all possible child nodes are created
 		//fmt.Println("****Select****")
 		for len(node.getUnplayedMoves()) == 0 && len(node.ChildNodes) != 0 {
+			//Select a child by its UCT
 			node = node.selectChildByUCT()
 			//fmt.Printf("Selected node: %s\n", node.ToString())
 			gameTemp.PlayMove(node.action)
@@ -316,7 +325,7 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, serverPort int, roo
 		//fmt.Printf("****Expand**** Game OVER: %t\n", gameTemp.IsGameOver())
 		if len(node.getUnplayedMoves()) > 0 && gameTemp.IsGameOver() != true {
 			unplayedMoves := node.getUnplayedMoves()
-
+			//Pick a random move from unplayed Moves
 			move := unplayedMoves[rand.Intn(len(unplayedMoves))]
 
 			gameTemp.PlayMove(move)
@@ -329,6 +338,7 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, serverPort int, roo
 				validMoves := gameTemp.GetValidMoves()
 				//fmt.Printf("EXP: action: %d PARENT of the child to be added %p\n", move, node)
 				mctsIterations++
+				//shared.Wg.Wait()
 				retCode, nnOut := database.GetCacheEntry(boardIndex)
 				if retCode == false { //No cache entry found
 

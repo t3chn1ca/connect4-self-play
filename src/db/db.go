@@ -18,15 +18,16 @@ func checkErr(err error) {
 
 	if err != nil {
 		fmt.Println("Panic!")
-		//panic(err)
+		panic(err)
 		os.Exit(-1)
 	}
 }
 
 type Database struct {
-	name         string
-	connTraining *sql.DB
-	connCache    *sql.DB
+	name          string
+	connTraining  *sql.DB
+	connCache     *sql.DB
+	connCacheFile *sql.DB
 }
 
 type TrainingSample struct {
@@ -115,9 +116,43 @@ func (db *Database) ClearCache() {
 	checkErr(err)
 }
 
-func (db *Database) CreateCacheTable(dbFile string) {
+func (db *Database) SyncFileDbToMemoryDb() {
+	sql_str := "ATTACH DATABASE './nnForwardPassCache.db' AS cache_file;"
+	_, err := db.connCache.Exec(sql_str)
+	checkErr(err)
+	sql_str = "INSERT INTO cache SELECT * FROM cache_file.cache"
+	_, err = db.connCache.Exec(sql_str)
+	checkErr(err)
+}
 
-	dbCon, err := sql.Open("sqlite3", "file::memory:") //?cache=shared&_sync=0&_mutex=no") //":memory:?_sync=0&_mutex=no") //:?_mutex=no") //":memory:?_sync=0") //""./"+dbFile+".db")
+func (db *Database) SyncMemoryDbToFileDb() {
+	sql_str := "DETACH DATABASE cache_file;"
+	_, err := db.connCache.Exec(sql_str)
+	sql_str = "ATTACH DATABASE './nnForwardPassCache.db' AS cache_file;"
+	_, err = db.connCache.Exec(sql_str)
+	checkErr(err)
+	sql_str = "INSERT INTO cache_file.cache SELECT * FROM cache WHERE cache.boardIndex NOT IN (select boardIndex from cache_file.cache)"
+	_, err = db.connCache.Exec(sql_str)
+	checkErr(err)
+	fmt.Println("Syncing cache to file")
+}
+
+func (db *Database) CreateCacheTableFile() {
+
+	dbCon, err := sql.Open("sqlite3", "./nnForwardPassCache.db") //?_locking=EXCLUSIVE&_mutex=no&cache=shared&_sync=0") //?cache=shared&_sync=0&_mutex=no") //":memory:?_sync=0&_mutex=no") //:?_mutex=no") //":memory:?_sync=0") //""./"+dbFile+".db")
+	checkErr(err)
+	fmt.Println("Creating cache table in : nnForwardPassCache.db")
+	//stmt, err := dbCon.Prepare("CREATE TABLE IF NOT EXISTS cache(boardIndex TEXT PRIMARY KEY, json TEXT);")
+	//checkErr(err)
+	sql_str := "CREATE TABLE IF NOT EXISTS cache(boardIndex TEXT PRIMARY KEY, json TEXT);"
+	_, err = dbCon.Exec(sql_str)
+	checkErr(err)
+	db.connCacheFile = dbCon
+}
+
+func (db *Database) CreateCacheTableMemory() {
+
+	dbCon, err := sql.Open("sqlite3", "file::memory:") //?_locking=EXCLUSIVE&_mutex=no&cache=shared&_sync=0") //?cache=shared&_sync=0&_mutex=no") //":memory:?_sync=0&_mutex=no") //:?_mutex=no") //":memory:?_sync=0") //""./"+dbFile+".db")
 	checkErr(err)
 	fmt.Println("Creating cache table..")
 	//stmt, err := dbCon.Prepare("CREATE TABLE IF NOT EXISTS cache(boardIndex TEXT PRIMARY KEY, json TEXT);")

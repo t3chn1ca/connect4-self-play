@@ -12,7 +12,7 @@ import (
 	  the outcome is driven by state rather than initial parameters
 
    BUGS:
-   1. Add dritchlet noise to make more explorations, make every game in the different iterations different
+   1. Add dritchlet noise to make more explorations, make every game in the different iterations different <= Not needed, early move randomization and random pick of moves achieves this
    2. Draws are not captured, fix that to update both winners in case of draw
 
 
@@ -32,7 +32,7 @@ import (
 //On average there are 23 moves in connect-4 (ref:reddit.com/r/math/comments/1lo4od/how_many_games_of_connect4_there_are/)
 //Create a randomizer which picks random moves in the first 25% (5.75) of the moves
 
-const MAX_MCTS_ITERATIONS = 500
+const MAX_MCTS_ITERATIONS = 2000
 
 var QUARTER_OF_AVG_MOVES = 2
 
@@ -43,6 +43,7 @@ func main() {
 	selectedChild = nil
 	var randomWin = 0
 	var connect4zeroWin = 0
+	api.MonteCarloCacheInit()
 
 	for iteration := 0; iteration < 100; iteration++ {
 
@@ -52,7 +53,7 @@ func main() {
 		//fmt.Scanln()
 		for {
 			//ChildNodesselectedChild = nil
-			selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, selectedChild, false, false)
+			selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, selectedChild, false, false)
 			fmt.Printf("Move played by Player %s = %d\n", game.PlayerToString(game.GetPlayerToMove()), selectedChild.GetAction())
 
 			game.PlayMove(selectedChild.GetAction())
@@ -60,6 +61,7 @@ func main() {
 			if game.IsGameOver() {
 				println("GAME OVER")
 				connect4zeroWin++
+				api.MonteCarloCacheSyncToFile()
 				break
 			}
 
@@ -71,6 +73,7 @@ func main() {
 			game.DumpBoard()
 			if game.IsGameOver() {
 				println("GAME OVER")
+				api.MonteCarloCacheSyncToFile()
 				randomWin++
 				break
 			}
