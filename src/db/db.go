@@ -18,7 +18,7 @@ func checkErr(err error) {
 
 	if err != nil {
 		fmt.Println("Panic!")
-		panic(err)
+		//panic(err)
 		os.Exit(-1)
 	}
 }

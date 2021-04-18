@@ -3,7 +3,6 @@ package main
 import (
 	"api"
 	"fmt"
-	"math/big"
 	"math/rand"
 )
 
@@ -15,7 +14,7 @@ const MAX_MCTS_ITERATIONS = 900
 var failCount = 0
 var runCount = 0
 
-func setupGameWithBoardIndex(boardIndex big.Int) *api.Connect4 {
+func setupGameWithBoardIndex(boardIndex string) *api.Connect4 {
 	var game = api.NewConnect4FromIndex(boardIndex)
 	game.DumpBoard()
 	return game
@@ -34,7 +33,7 @@ func setupGame(game *api.Connect4, moves []int) *api.Connect4 {
 
 }
 
-func testCaseWrapperBoardIndex(boardIndex big.Int, validActions []int, testCaseName string) bool {
+func testCaseWrapperBoardIndex(boardIndex string, validActions []int, testCaseName string) bool {
 	fmt.Println("\n================================" + testCaseName + ": START======================")
 
 	game := setupGameWithBoardIndex(boardIndex)
@@ -237,8 +236,7 @@ func test8() bool {
 
 	*/
 
-	var boardIndex big.Int
-	boardIndex.SetString("31028075286456153321", 10)
+	boardIndex := "000211000122200021110002211002122201112210"
 	result := testCaseWrapperBoardIndex(boardIndex, []int{0}, "test8")
 	return result
 
@@ -256,8 +254,7 @@ func test9() bool {
 		0 1 2 3 4 5 6
 	*/
 
-	var boardIndex big.Int
-	boardIndex.SetString("98762270025425421618", 10)
+	boardIndex := "000000000000000000000000000000000000202011"
 	result := testCaseWrapperBoardIndex(boardIndex, []int{2}, "test9")
 	return result
 
@@ -283,7 +280,7 @@ func main() {
 		test7()
 		test8()
 		test9()
-		//test10()
+
 	}
 	fmt.Printf("Failcount= %d/%d\n", failCount, runCount)
 }

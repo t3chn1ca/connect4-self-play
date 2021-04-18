@@ -248,6 +248,7 @@ func MonteCarloCacheInit() {
 }
 
 func MonteCarloCacheSyncToFile() {
+	fmt.Println("Syncing in memory cache to file")
 	database.SyncMemoryDbToFileDb()
 }
 
