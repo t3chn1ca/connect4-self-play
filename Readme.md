@@ -33,3 +33,24 @@ docker run --publish=0.0.0.0:8888:8888/tcp --publish=0.0.0.0:1234:80/tcp --publi
 
 Replace the bold parts with your local folders of Python and goloang repos we pulled from bitbucket earlier.
 Then replace ad94de7a61ae with the docker image id you get from 'docker images' command which was run before.
+
+Once thats done You would want to install go on your linux system first,
+
+https://golang.org/doc/install
+
+Then :
+
+cd /path/to/connect4-selfplay
+export GOPATH="/path/to/connect4-selfplay"
+
+#Build a automated test program, which tests standard connect-4 positions and checks AlphaZero responses
+go build src/test/test-connect4-moves-zero.go
+
+#run the test program
+./test-connect4-moves-zero
+
+#If you would like to play AlphaZero then build this code
+go build src/humanPlay-connect4zero.go
+
+#Play yourself agains AlphaZero
+./humanPlay-connect4zero
