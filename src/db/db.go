@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"os"
 	"shared"
 	"time"
 
@@ -18,8 +17,8 @@ func checkErr(err error) {
 
 	if err != nil {
 		fmt.Println("Panic!")
-		//panic(err)
-		os.Exit(-1)
+		panic(err)
+		//os.Exit(-1)
 	}
 }
 
@@ -72,7 +71,7 @@ func (db *Database) UpdateWinner(lastUid int32, iteration int, playerWon string)
 }
 
 func (db *Database) CreateTable(dbFile string) {
-	dbCon, err := sql.Open("sqlite3", "./"+dbFile+".db")
+	dbCon, err := sql.Open("sqlite3", "./db/"+dbFile+".db")
 	checkErr(err)
 
 	stmt, err := dbCon.Prepare("CREATE TABLE IF NOT EXISTS training(uid integer PRIMARY KEY AUTOINCREMENT, boardIndex TEXT, playerToMove TEXT, created datetime, iteration INTEGER, json TEXT, z INTEGER);")
@@ -117,7 +116,7 @@ func (db *Database) ClearCache() {
 }
 
 func (db *Database) SyncFileDbToMemoryDb() {
-	sql_str := "ATTACH DATABASE './nnForwardPassCache.db' AS cache_file;"
+	sql_str := "ATTACH DATABASE './db/nnForwardPassCache.db' AS cache_file;"
 	_, err := db.connCache.Exec(sql_str)
 	checkErr(err)
 	sql_str = "INSERT INTO cache SELECT * FROM cache_file.cache"
@@ -128,7 +127,7 @@ func (db *Database) SyncFileDbToMemoryDb() {
 func (db *Database) SyncMemoryDbToFileDb() {
 	sql_str := "DETACH DATABASE cache_file;"
 	_, err := db.connCache.Exec(sql_str)
-	sql_str = "ATTACH DATABASE './nnForwardPassCache.db' AS cache_file;"
+	sql_str = "ATTACH DATABASE './db/nnForwardPassCache.db' AS cache_file;"
 	_, err = db.connCache.Exec(sql_str)
 	checkErr(err)
 	sql_str = "INSERT INTO cache_file.cache SELECT * FROM cache WHERE cache.boardIndex NOT IN (select boardIndex from cache_file.cache)"
@@ -139,9 +138,9 @@ func (db *Database) SyncMemoryDbToFileDb() {
 
 func (db *Database) CreateCacheTableFile() {
 
-	dbCon, err := sql.Open("sqlite3", "./nnForwardPassCache.db") //?_locking=EXCLUSIVE&_mutex=no&cache=shared&_sync=0") //?cache=shared&_sync=0&_mutex=no") //":memory:?_sync=0&_mutex=no") //:?_mutex=no") //":memory:?_sync=0") //""./"+dbFile+".db")
+	dbCon, err := sql.Open("sqlite3", "./db/nnForwardPassCache.db") //?_locking=EXCLUSIVE&_mutex=no&cache=shared&_sync=0") //?cache=shared&_sync=0&_mutex=no") //":memory:?_sync=0&_mutex=no") //:?_mutex=no") //":memory:?_sync=0") //""./"+dbFile+".db")
 	checkErr(err)
-	fmt.Println("Creating cache table in : nnForwardPassCache.db")
+	fmt.Println("Creating cache table in : ./db/nnForwardPassCache.db")
 	//stmt, err := dbCon.Prepare("CREATE TABLE IF NOT EXISTS cache(boardIndex TEXT PRIMARY KEY, json TEXT);")
 	//checkErr(err)
 	sql_str := "CREATE TABLE IF NOT EXISTS cache(boardIndex TEXT PRIMARY KEY, json TEXT);"

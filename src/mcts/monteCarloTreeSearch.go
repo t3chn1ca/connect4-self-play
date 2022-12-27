@@ -57,6 +57,7 @@ func (node Node) GetParent() *Node {
 	return node.parent
 }
 
+/* Average of wins and draws */
 func (node *Node) getValue() float32 {
 	return ((float32(node.wins) * WIN_VALUE) + (float32(node.draws) * DRAW_VALUE)) / float32(node.VisitCount)
 }
@@ -184,10 +185,8 @@ func (node *Node) GetPi() [MAX_CHILD_NODES]float32 {
 	return pi
 }
 
-const MAX_MCTS_ITERATIONS = 500
-
-func MctsForwardPass(game *Connect4) shared.NNOut {
-	selectedNode := MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, nil, false)
+func MctsForwardPass(game *Connect4, max_mcts_iterations int) shared.NNOut {
+	selectedNode := MonteCarloTreeSearch(game, max_mcts_iterations, nil, false)
 
 	var nnOut shared.NNOut
 

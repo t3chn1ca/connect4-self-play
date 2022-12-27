@@ -7,9 +7,24 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
+	"time"
 )
 
-const MAX_MCTS_ITERATIONS = 1498
+const MAX_MCTS_ITERATIONS = 400
+
+//Do a search with traditional MCTS instead of using a backend nn
+const MCTS_TREE_SEARCH_TRUE = true
+const MCTS_TREE_SEARCH_FALSE = false
+const NN_TREE_SEARCH_TRUE = false
+
+//Sample moves propablistically instead of picking best move
+const PROPABLISTIC_SAMPLING_FALSE = false
+const PROPABLISTIC_SAMPLING_TRUE = true
+const PICK_BEST_MOVE_TRUE = false
+
+//Debugs enabled
+const DEBUGS_TRUE = true
+const DEBUGS_FALSE = false
 
 var selectedChild *api.Node = nil
 
@@ -40,7 +55,8 @@ func playMove(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 	if moves[0] == DO_FIRST_MOVE {
 		fmt.Printf("Doing first move")
-		selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, selectedChild, false, false)
+		start := time.Now()
+		selectedChild = api.MonteCarloTreeSearch(NN_TREE_SEARCH_TRUE, PROPABLISTIC_SAMPLING_FALSE, game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, selectedChild, DEBUGS_FALSE)
 		duration := time.Since(start)
 		fmt.Printf("MCTS(%d) took %f long\n", MAX_MCTS_ITERATIONS, duration.Seconds())
 
@@ -71,7 +87,8 @@ func playMove(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		//Let AI do its move
-		selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, selectedChild, false, false)
+		start := time.Now()
+		selectedChild = api.MonteCarloTreeSearch(NN_TREE_SEARCH_TRUE, PROPABLISTIC_SAMPLING_FALSE, game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, selectedChild, DEBUGS_FALSE)
 		duration := time.Since(start)
 
 		fmt.Printf("MCTS(%d) took %f long\n", MAX_MCTS_ITERATIONS, duration.Seconds())
@@ -95,6 +112,7 @@ func main() {
 	http.HandleFunc("/", playMove)
 	http.HandleFunc("/resetBoard", resetBoard)
 	http.HandleFunc("/getAiThinkingStatus", getAiThinkingStatus)
+	fmt.Printf("Listening on port 8888\n")
 	log.Fatal(http.ListenAndServe(":8888", nil))
 
 }

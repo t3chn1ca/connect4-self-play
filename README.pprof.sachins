@@ -1,0 +1,11 @@
+$./humanPlay-connect4zero --cpuprofile cpu.prof
+
+$ go tool pprof cpu.prof
+File: humanPlay-connect4zero
+Build ID: 0d9c394b3d63c87925cee29f5cf8f915b9d262b4
+Type: cpu
+Time: Dec 27, 2022 at 10:34am (NZDT)
+Duration: 4.81s, Total samples = 4.65s (96.67%)
+Entering interactive mode (type "help" for commands, "o" for options)
+(pprof) web
+

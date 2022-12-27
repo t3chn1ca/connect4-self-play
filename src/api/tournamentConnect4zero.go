@@ -22,6 +22,20 @@ type Results struct {
 	NewTrainedPlayerWins float32
 }
 
+//Do a search with traditional MCTS instead of using a backend nn
+const MCTS_TREE_SEARCH_TRUE = true
+const MCTS_TREE_SEARCH_FALSE = false
+const NN_TREE_SEARCH_TRUE = false
+
+//Sample moves propablistically instead of picking best move
+const PROPABLISTIC_SAMPLING_FALSE = false
+const PROPABLISTIC_SAMPLING_TRUE = true
+const PICK_BEST_MOVE_TRUE = false
+
+//Debugs enabled
+const DEBUGS_TRUE = true
+const DEBUGS_FALSE = false
+
 /*
  TODO: Complete tournament code which returns results
 
@@ -63,7 +77,7 @@ func Tournament(maxTournaments int) Results {
 			}
 
 			selectedChild = nil // Start with new tree for every move to make search similar for both parties
-			selectedChild = MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS_TOURNAMENT, server, nil, false, false)
+			selectedChild = MonteCarloTreeSearch(NN_TREE_SEARCH_TRUE, PROPABLISTIC_SAMPLING_FALSE, game, MAX_MCTS_ITERATIONS_TOURNAMENT, server, nil, DEBUGS_FALSE)
 			move++
 			if move < RANDOMIZE_MOVE_COUNT*2 { // Randomize the first n moves for variations in games
 				//Let MCTS create child nodes before random selection

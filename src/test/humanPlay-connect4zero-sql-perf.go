@@ -93,14 +93,16 @@ func main() {
 		//go api.MonteCarloCacheSyncToFile()
 		//break
 
-		fmt.Printf("Human move: ")
-		var humanMove int
-		n, _ := fmt.Scanf("%d", &humanMove)
-		if humanMove < 0 || humanMove > 6 || n == 0 {
-			fmt.Printf("Incorrect Move!!!\nHuman move: ")
-		}
 		//DEBUG: do random human move
-		//humanMove := rand.Intn(7)
+		/*
+			fmt.Printf("Human move: ")
+			var humanMove int
+			n, _ := fmt.Scanf("%d", &humanMove)
+			if humanMove < 0 || humanMove > 6 || n == 0 {
+				fmt.Printf("Incorrect Move!!!\nHuman move: ")
+			}
+		*/
+		humanMove := rand.Intn(7)
 		game.PlayMove(humanMove)
 		game.DumpBoard()
 		if game.IsGameOver() {

@@ -10,7 +10,11 @@ import (
 )
 
 /*
- * Questions: Why is the end game not changing with change in iterations or random seed from golang ( it does change when seed is changed at nn)?
+ * Questions:
+   In MCTS backend samples, mctsWithQVal_Atl, the 0th game is draw but AvgV for both players is -0.5 & +0.5 why? Should it not be zero?
+   A:
+
+   Why is the end game not changing with change in iterations or random seed from golang ( it does change when seed is changed at nn)?
    A: It changes when nn seed is changed, MCTS randomness does not effect outcome for large iterations as
 	  the outcome is driven by state rather than initial parameters
 
@@ -39,11 +43,24 @@ const MAX_MCTS_ITERATIONS = 2000
 
 const END_UID_INDEX = -1
 
+//Sample moves propablistically instead of picking best move
 const PROPABLISTIC_SAMPLING_FALSE = false
 const PROPABLISTIC_SAMPLING_TRUE = true
+const PICK_BEST_MOVE_TRUE = false
+
+//Do a search with traditional MCTS instead of using a backend nn
+const MCTS_TREE_SEARCH_TRUE = true
+const MCTS_TREE_SEARCH_FALSE = false
+const NN_TREE_SEARCH_TRUE = false
+
+const TRAINING_GAMES = 1000
+
+//Debugs enabled
+const DEBUGS_TRUE = true
+const DEBUGS_FALSE = false
 
 //First moves are randomized to create a rich set of diverse games for training, else the games are repetetive due to the NN always responding the same way
-var QUARTER_OF_AVG_MOVES = 2 //Disable random first moves with -1 after some training
+var QUARTER_OF_AVG_MOVES = 1 //Disable random first moves with -1 after some training
 
 func initLogging() {
 	file, err := os.OpenFile("logs.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
@@ -59,34 +76,36 @@ func main() {
 	//defer profile.Start().Stop()
 	rand.Seed(int64(api.Seed_for_rand))
 	var database db.Database
-	database.CreateTable("mctsWithQVal_iter4")
+	database.CreateTable("mctsWithQVal_dec_20_2022")
 
 	var selectedChild *api.Node
 	var currRootNode *api.Node
 	var mctsRootNode *api.Node
+	var lastUid int32 = 0
 
 	selectedChild = nil
 	for {
+
 		//Clear cache beggining of new training
 		api.MonteCarloCacheInit()
 		//In past all samples were used for training, now moved it to last 50 iterations
-		lastUid := database.GetLastUid()
+		lastUid = database.GetLastUid()
 		log.Printf("LastUid= %d\n", lastUid)
 		var game = api.NewConnect4()
 		//Run MCTS first time to create root node and discard results of search , ie the selected child
-		selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, selectedChild, false, PROPABLISTIC_SAMPLING_FALSE)
+		selectedChild = api.MonteCarloTreeSearch(MCTS_TREE_SEARCH_TRUE, PROPABLISTIC_SAMPLING_FALSE, game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, selectedChild, DEBUGS_FALSE)
 		//Make a copy of root node for caching, the idea being to pass the existing MCTS back for further iterations
 		mctsRootNode = selectedChild.GetParent()
 		//Set selectedChild to mctsRootNode so that an gameIteration can start from root
 		selectedChild = mctsRootNode
-		//Play over 200 games with one another and create move samples
-		for gameIteration := 0; gameIteration < 200; gameIteration++ {
+		//Play over TRAINING_GAMES games with one another and create move samples
+		for gameIteration := 0; gameIteration < TRAINING_GAMES; gameIteration++ {
 			var move = 0
 			game = api.NewConnect4()
 
 			for {
 				currRootNode = selectedChild
-				selectedChild = api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, currRootNode, false, PROPABLISTIC_SAMPLING_FALSE)
+				selectedChild = api.MonteCarloTreeSearch(MCTS_TREE_SEARCH_TRUE, PROPABLISTIC_SAMPLING_FALSE, game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, currRootNode, DEBUGS_FALSE)
 				//Check we are 1/4 through the game for both players if not pick random
 				if move < QUARTER_OF_AVG_MOVES*2 {
 					//Let MCTS create child nodes before random selection

@@ -1,3 +1,7 @@
+/*
+ * Questions: Why is 'Position win pc = -99.241974' showing negative values when the player who makes penultimate move is sure to win?
+ *
+ */
 package api
 
 import (
@@ -14,7 +18,7 @@ var C = 1.0 // Used CPuct optimizer on gen4 to find sweet spot //math.Sqrt(2.0) 
 const T = 0.99 //0.5001 // Control exploration with temp, T -> 0 no exploration, T->1 reflects a propablity based on visits
 const MAX_CHILD_NODES = 7
 
-//Node : MonteCarlo tree node
+// Node : MonteCarlo tree node
 // Node is seen from the perspective of the PLAYER who is going to move from this node
 // Z & v are from the perspective of the player who is in this node(state) and about to make move
 type Node struct {
@@ -104,7 +108,7 @@ func (node *Node) getUbc() float32 {
 Calculate pi from the visits made to all child nodes
 This is done on the root node of the MCTS
 
-Pi out is softmax, ie all values sum to 1
+# Pi out is softmax, ie all values sum to 1
 
 Pi[7] , where index is action
 */
@@ -149,7 +153,7 @@ func (node *Node) getUnplayedMoves() []int {
 	return node.unplayedMoves
 }
 
-//Propablity of all child actions from this node, returned by NN
+// Propablity of all child actions from this node, returned by NN
 func (node *Node) GetP() []float32 {
 	return node.propActionChildNodes
 }
@@ -212,7 +216,7 @@ func (node *Node) GetAction() int {
 	return node.action
 }
 
-//Return parent of node
+// Return parent of node
 func (node *Node) GetParent() *Node {
 	return node.parent
 }
@@ -252,15 +256,14 @@ func MonteCarloCacheSyncToFile() {
 	database.SyncMemoryDbToFileDb()
 }
 
-var mctsIterations = 0
-var cacheHits = 0
-var MctsIterationPercent float32 = 0.0
+// This variable dicates the MCTS depth when using MCTS backend ( instead of NN backend ), not to be be confused with max_iterations in func MonteCarloTreeSearch()
+const MAX_MCTS_ITERATIONS = 500
 
-func MonteCarloTreeSearch(game *Connect4, max_iteration int, serverPort int, root *Node, debug bool, propablisticSampleOfPi bool) *Node {
-
+func MonteCarloTreeSearch(mctsTreeSearch bool, propablisticSampleOfPi bool, game *Connect4, max_iteration int, serverPort int, root *Node, debug bool) *Node {
+	var cacheHits = 0
+	var mctsIterations = 0
 	//fmt.Printf("\nMCTSNN root node index = %s\n", boardIndex.String())
 	var rootNode Node
-	//var mctsGame *mcts.Connect4
 
 	boardIndex := game.GetBoardIndex()
 	//First time MCT is created if root == nil
@@ -273,18 +276,22 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, serverPort int, roo
 		//No wait required for first call of GetCacheEntry
 		retCode, nnOut := database.GetCacheEntry(boardIndex)
 		if retCode == false {
-			//mctsGame = CloneGame(game)
-			//nnOut = mcts.MctsForwardPass(mctsGame)
+			if mctsTreeSearch {
+				mctsGame := CloneGame(game)
+				nnOut = mcts.MctsForwardPass(mctsGame, MAX_MCTS_ITERATIONS)
+				database.InsertCacheEntry(boardIndex, nnOut)
+			} else {
 
-			//nnOut = NnForwardPass(game, serverPort)
-			//database.InsertCacheEntry(boardIndex, nnOut)
-
-			nnOutArray, boardIndexes := NnForwardPassMultiBoard(game, serverPort)
-			database.InsertCacheEntries(boardIndexes, nnOutArray)
-			if boardIndexes[MAX_CHILD_NODES] != boardIndex {
-				panic("Board Indexes dont match!!")
+				//Multimove forward pass
+				nnOutArray, boardIndexes := NnForwardPassMultiBoard(game, serverPort)
+				database.InsertCacheEntries(boardIndexes, nnOutArray)
+				if boardIndexes[MAX_CHILD_NODES] != boardIndex {
+					panic("Board Indexes dont match!!")
+				}
+				nnOut = nnOutArray[MAX_CHILD_NODES] //Last entry is current board Index
+				//single move forward pass
+				//nnOut = NnForwardPass(game, serverPort)
 			}
-			nnOut = nnOutArray[MAX_CHILD_NODES] //Last entry is current board Index
 		} else {
 			//boardIndex := game.GetBoardIndex()
 			//fmt.Printf("Cache hit for boardIndex: %s", boardIndex.String())
@@ -300,11 +307,9 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, serverPort int, roo
 		}
 	}
 	var node *Node
-	MctsIterationPercent = 0
 	//fmt.Printf("-------->Root node = %p", root)
 	for i := 0; i < max_iteration; i++ {
 		fmt.Printf("\rThinking %.2f%% complete", float32(i*100)/float32(max_iteration))
-		MctsIterationPercent = float32(i*100) / float32(max_iteration)
 		//fmt.Printf("\n\nMCTSNN Iteration: %d ======================================================\n", i)
 		node = root
 		//fmt.Printf("-------->Root node = %p\n", root)
@@ -342,22 +347,27 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, serverPort int, roo
 				//shared.Wg.Wait()
 				retCode, nnOut := database.GetCacheEntry(boardIndex)
 				if retCode == false { //No cache entry found
+					if mctsTreeSearch {
+						mctsGame := CloneGame(&gameTemp)
+						nnOut = mcts.MctsForwardPass(mctsGame, MAX_MCTS_ITERATIONS)
+						database.InsertCacheEntry(boardIndex, nnOut)
+						//fmt.Println("\nInserting cache entry : " + boardIndex)
+					} else {
+						nnOutArray, boardIndexes := NnForwardPassMultiBoard(&gameTemp, serverPort)
+						if boardIndexes[MAX_CHILD_NODES] != boardIndex {
+							gameTemp.DumpBoard()
+							fmt.Printf("\nBoardIndexes: %v\n", boardIndexes)
+							fmt.Println("Board Index evaluated = " + boardIndex + " boardIndexes[MAX_CHILD_NODES] = " + boardIndexes[MAX_CHILD_NODES] + "\n")
+							panic("Board Indexes dont match!!")
+						}
+						//Single move forward pass
+						//nnOut = NnForwardPass(&gameTemp, serverPort)
+						//fmt.Println("\nInserting cache entry : " + boardIndex)
 
-					//mctsGame := CloneGame(&gameTemp)
-					//nnOut = mcts.MctsForwardPass(mctsGame)
-
-					//nnOut = NnForwardPass(&gameTemp, serverPort)
-					//fmt.Println("\nInserting cache entry : " + boardIndex.String())
-					//database.InsertCacheEntry(boardIndex, nnOut)
-					nnOutArray, boardIndexes := NnForwardPassMultiBoard(&gameTemp, serverPort)
-					if boardIndexes[MAX_CHILD_NODES] != boardIndex {
-						gameTemp.DumpBoard()
-						fmt.Printf("\nBoardIndexes: %v\n", boardIndexes)
-						fmt.Println("Board Index evaluated = " + boardIndex + " boardIndexes[MAX_CHILD_NODES] = " + boardIndexes[MAX_CHILD_NODES] + "\n")
-						panic("Board Indexes dont match!!")
+						//Multimove forward pass
+						database.InsertCacheEntries(boardIndexes, nnOutArray)
+						nnOut = nnOutArray[MAX_CHILD_NODES] //Last entry is current board Index
 					}
-					database.InsertCacheEntries(boardIndexes, nnOutArray)
-					nnOut = nnOutArray[MAX_CHILD_NODES] //Last entry is current board Index
 				} else {
 					cacheHits++
 					//fmt.Println("\nCache hit for boardIndex: " + boardIndex.String())
@@ -422,7 +432,8 @@ func MonteCarloTreeSearch(game *Connect4, max_iteration int, serverPort int, roo
 	})
 
 	//fmt.Printf("Selected move for %s = %d\n", game.PlayerToString(game.GetPlayerToMove()), root.ChildNodes[len(root.ChildNodes)-1].action)
-	pi := root.GetPi(true)
+	const DEBUGS_TRUE = true
+	pi := root.GetPi(DEBUGS_TRUE)
 	//fmt.Printf("Pis : %v\n", pi)
 	fmt.Printf("Position win pc = %f\n", root.Q*100)
 	fmt.Printf("Cache hit PC = %f\n", 100*float32(cacheHits)/float32(mctsIterations))

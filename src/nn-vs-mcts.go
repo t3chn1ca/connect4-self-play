@@ -12,7 +12,7 @@ import (
 //ref: https://github.com/jpbruneton/Alpha-Zero-algorithm-for-Connect-4-game
 // Use MCTS depth as a reference to compare the NN ( Something like an ELO rating)
 
-const MAX_MCTS_ITERATIONS_NN = 1500
+const MAX_MCTS_ITERATIONS_NN = 1000
 const MAX_MCTS_ITERATIONS_MCTS = 2000
 const SERVER_PORT = api.TRAIN_SERVER_PORT
 const QUARTER_OF_AVG_MOVES = 2
@@ -84,7 +84,7 @@ func main() {
 			gameNn.DumpBoard()
 			fmt.Println("----------------------------")
 			fmt.Printf("TOURNAMENT : %d\n", tournament)
-			fmt.Printf(" MCTS (depth:%d) Wins = %f/%d  NN Wins = %f/%d \n", MAX_MCTS_ITERATIONS_MCTS, mctsWinCount, MAX_TOURNAMENTS, nnWinCount, MAX_TOURNAMENTS)
+			fmt.Printf(" MCTS (depth:%d) Wins = %f/%d  NN (depth: %d) Wins = %f/%d \n", MAX_MCTS_ITERATIONS_MCTS, mctsWinCount, MAX_TOURNAMENTS, MAX_MCTS_ITERATIONS_NN, nnWinCount, MAX_TOURNAMENTS)
 			fmt.Println("----------------------------")
 
 			if gameNn.IsGameOver() {
