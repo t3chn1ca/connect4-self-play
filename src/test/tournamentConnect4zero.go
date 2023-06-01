@@ -1,1 +1,0 @@
-../tournamentConnect4zero.go

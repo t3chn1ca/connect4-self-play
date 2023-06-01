@@ -10,19 +10,19 @@ import (
 	"time"
 )
 
-const MAX_MCTS_ITERATIONS = 400
+const MAX_MCTS_ITERATIONS = 1000
 
-//Do a search with traditional MCTS instead of using a backend nn
+// Do a search with traditional MCTS instead of using a backend nn
 const MCTS_TREE_SEARCH_TRUE = true
 const MCTS_TREE_SEARCH_FALSE = false
 const NN_TREE_SEARCH_TRUE = false
 
-//Sample moves propablistically instead of picking best move
+// Sample moves propablistically instead of picking best move
 const PROPABLISTIC_SAMPLING_FALSE = false
 const PROPABLISTIC_SAMPLING_TRUE = true
 const PICK_BEST_MOVE_TRUE = false
 
-//Debugs enabled
+// Debugs enabled
 const DEBUGS_TRUE = true
 const DEBUGS_FALSE = false
 

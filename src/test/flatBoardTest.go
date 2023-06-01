@@ -3,7 +3,6 @@ package main
 import (
 	"api"
 	"fmt"
-	"math/big"
 )
 
 const PASS = true
@@ -14,7 +13,7 @@ const MAX_MCTS_ITERATIONS = 900
 var failCount = 0
 var runCount = 0
 
-func setupGameWithBoardIndex(boardIndex big.Int) *api.Connect4 {
+func setupGameWithBoardIndex(boardIndex string) *api.Connect4 {
 	var game = api.NewConnect4FromIndex(boardIndex)
 	game.DumpBoard()
 	boardFlat := game.GetBoardFlat()
@@ -22,7 +21,7 @@ func setupGameWithBoardIndex(boardIndex big.Int) *api.Connect4 {
 	return game
 }
 
-func testCaseWrapperBoardIndex(boardIndex big.Int, validActions []int, testCaseName string) bool {
+func testCaseWrapperBoardIndex(boardIndex string, validActions []int, testCaseName string) bool {
 	fmt.Println("\n================================" + testCaseName + ": START======================")
 
 	_ = setupGameWithBoardIndex(boardIndex)
@@ -32,7 +31,7 @@ func testCaseWrapperBoardIndex(boardIndex big.Int, validActions []int, testCaseN
 
 func test3() bool {
 
-	var boardIndex big.Int
+	var boardIndex string
 	boardIndex.SetString("1352087347153435893", 10)
 	result := testCaseWrapperBoardIndex(boardIndex, []int{2, 3}, "test3")
 

@@ -17,6 +17,20 @@ const MAX_MCTS_ITERATIONS_MCTS = 2000
 const SERVER_PORT = api.TRAIN_SERVER_PORT
 const QUARTER_OF_AVG_MOVES = 2
 
+// Do a search with traditional MCTS instead of using a backend nn
+const MCTS_TREE_SEARCH_TRUE = true
+const MCTS_TREE_SEARCH_FALSE = false
+const NN_TREE_SEARCH_TRUE = false
+
+// Sample moves propablistically instead of picking best move
+const PROPABLISTIC_SAMPLING_FALSE = false
+const PROPABLISTIC_SAMPLING_TRUE = true
+const PICK_BEST_MOVE_TRUE = false
+
+// Debugs enabled
+const DEBUGS_TRUE = true
+const DEBUGS_FALSE = false
+
 func setupGame(game *api.Connect4, moves []int) *api.Connect4 {
 
 	for _, move := range moves {
@@ -32,7 +46,7 @@ func setupGame(game *api.Connect4, moves []int) *api.Connect4 {
 
 var MAX_TOURNAMENTS = 30
 
-//TODO: Debug multiple instances of cache created
+// TODO: Debug multiple instances of cache created
 func main() {
 
 	//defer profile.Start().Stop()
@@ -66,7 +80,7 @@ func main() {
 		var move = 0
 		for {
 
-			selectedChildNn = api.MonteCarloTreeSearch(gameNn, MAX_MCTS_ITERATIONS_NN, SERVER_PORT, nil, false, false)
+			selectedChildNn = api.MonteCarloTreeSearch(NN_TREE_SEARCH_TRUE, PICK_BEST_MOVE_TRUE, gameNn, MAX_MCTS_ITERATIONS_NN, SERVER_PORT, nil, DEBUGS_FALSE)
 
 			if move < QUARTER_OF_AVG_MOVES*2 {
 				//Let MCTS create child nodes before random selection

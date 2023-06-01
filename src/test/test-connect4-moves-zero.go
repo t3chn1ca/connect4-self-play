@@ -9,7 +9,21 @@ import (
 const PASS = true
 const FAIL = false
 
-const MAX_MCTS_ITERATIONS = 900
+const MAX_MCTS_ITERATIONS = 700
+
+// Sample moves propablistically instead of picking best move
+const PROPABLISTIC_SAMPLING_FALSE = false
+const PROPABLISTIC_SAMPLING_TRUE = true
+const PICK_BEST_MOVE_TRUE = false
+
+// Do a search with traditional MCTS instead of using a backend nn
+const MCTS_TREE_SEARCH_TRUE = true
+const MCTS_TREE_SEARCH_FALSE = false
+const NN_TREE_SEARCH_TRUE = false
+
+// Debugs enabled
+const DEBUGS_TRUE = true
+const DEBUGS_FALSE = false
 
 var failCount = 0
 var runCount = 0
@@ -43,7 +57,7 @@ func testCaseWrapperBoardIndex(boardIndex string, validActions []int, testCaseNa
 	fmt.Printf("Value = %v\n", nnOut.Value)
 	fmt.Printf("props %v\n", nnOut.P)
 
-	selectedChild := api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, nil, false, false)
+	selectedChild := api.MonteCarloTreeSearch(NN_TREE_SEARCH_TRUE, PICK_BEST_MOVE_TRUE, game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, nil, DEBUGS_FALSE)
 
 	runCount++
 	for _, action := range validActions {
@@ -75,7 +89,7 @@ func testCaseWrapper(moves []int, validActions []int, testCaseName string) bool 
 	fmt.Printf("Value = %v\n", nnOut.Value)
 	fmt.Printf("props %v\n", nnOut.P)
 
-	selectedChild := api.MonteCarloTreeSearch(game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, nil, false, false)
+	selectedChild := api.MonteCarloTreeSearch(NN_TREE_SEARCH_TRUE, PICK_BEST_MOVE_TRUE, game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, nil, DEBUGS_FALSE)
 
 	runCount++
 	for _, action := range validActions {
@@ -97,14 +111,15 @@ func testCaseWrapper(moves []int, validActions []int, testCaseName string) bool 
 }
 
 func test1() bool {
-	/*
-		   	- - - - - - -
-		   	- - - o - - -
-		   	x - - o o - x
-		   	o o x o x - x
-		   	o o o x x - o
-		   	o x x x o x x
-		-----------------------------------
+	/*      Doomed, as opponent will anyways win
+
+	   	- - - - - - -
+	   	- - - o - - -
+	   	x - - o o - x
+	   	o o x o x - x
+	   	o o o x x - o
+	   	o x x x o x x
+	-----------------------------------
 	*/
 
 	moves := []int{1, 0, 2, 4, 3, 0, 6, 1, 3, 2, 4, 6, 2, 0, 4, 1, 6, 3, 0, 4, 5, 3, 6, 3} //, 6, 2}

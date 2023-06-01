@@ -19,7 +19,7 @@ const T = 0.99 //0.5001 // Control exploration with temp, T -> 0 no exploration,
 const MAX_CHILD_NODES = 7
 
 // Node : MonteCarlo tree node
-// Node is seen from the perspective of the PLAYER who is going to move from this node
+// Node is seen from the perspective of the PLAYER who is going to move from this node ( or board state )
 // Z & v are from the perspective of the player who is in this node(state) and about to make move
 type Node struct {
 	parent        *Node
@@ -259,6 +259,8 @@ func MonteCarloCacheSyncToFile() {
 // This variable dicates the MCTS depth when using MCTS backend ( instead of NN backend ), not to be be confused with max_iterations in func MonteCarloTreeSearch()
 const MAX_MCTS_ITERATIONS = 500
 
+var MctsIterationPercent float32 = 0.0
+
 func MonteCarloTreeSearch(mctsTreeSearch bool, propablisticSampleOfPi bool, game *Connect4, max_iteration int, serverPort int, root *Node, debug bool) *Node {
 	var cacheHits = 0
 	var mctsIterations = 0
@@ -310,6 +312,8 @@ func MonteCarloTreeSearch(mctsTreeSearch bool, propablisticSampleOfPi bool, game
 	//fmt.Printf("-------->Root node = %p", root)
 	for i := 0; i < max_iteration; i++ {
 		fmt.Printf("\rThinking %.2f%% complete", float32(i*100)/float32(max_iteration))
+		//Expose % thinking process for API
+		MctsIterationPercent = float32(i*100) / float32(max_iteration)
 		//fmt.Printf("\n\nMCTSNN Iteration: %d ======================================================\n", i)
 		node = root
 		//fmt.Printf("-------->Root node = %p\n", root)
@@ -336,7 +340,8 @@ func MonteCarloTreeSearch(mctsTreeSearch bool, propablisticSampleOfPi bool, game
 
 			gameTemp.PlayMove(move)
 
-			if gameTemp.IsGameOver() != true { //With MCTS backend, MCTS forward pass does not work for completed game
+			if gameTemp.IsGameOver() != true { 
+				//With MCTS backend, MCTS forward pass does not work for completed game
 
 				//Collect state information for new child node creation
 				playerJustMoved := gameTemp.GetPlayerWhoJustMoved()
@@ -390,7 +395,7 @@ func MonteCarloTreeSearch(mctsTreeSearch bool, propablisticSampleOfPi bool, game
 				var value float32
 				reward := gameTemp.GetReward()
 				playerJustMoveIndex := GetPlayerIndex(playerJustMoved)
-				//Reward is -2 or 2 for wins and 1 for draw, In MCTS it should be between -1 & 1, 0.5 for draw
+				//Reward is -2 or 2 for wins and 1 for draw, In MCTS it should be between -1 & 1, 0.5 for draw. Divide/2 to scale it in MCTS range
 				value = float32(reward[playerJustMoveIndex]) / 2
 
 				tempNode := node.addChild(playerJustMoved, boardIndex, move, validMoves, node.propActionChildNodes[move], zeroPropablityArray, value)
@@ -401,6 +406,11 @@ func MonteCarloTreeSearch(mctsTreeSearch bool, propablisticSampleOfPi bool, game
 
 		//Backpropagate : We should be in a terminal state when we get here in traditional MCTS, but not in alpha algo
 		//fmt.Println("****Backpropagate****")
+
+		//TODO: Possible bug GPT analysis:
+		//The backpropagation step currently updates the node based on the value of the node where the simulation ended.
+		// In the AlphaGo Zero algorithm, the backpropagation step should update the node using the value from the perspective of the player who just moved.
+		// You should ensure that your implementation reflects this.
 
 		rewards := []float32{0, 0} //Player who just moved
 		playerJustMoveIndex := GetPlayerIndex(node.playerJustMoved)

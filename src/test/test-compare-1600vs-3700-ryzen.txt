@@ -1,0 +1,430 @@
+#######################################################Ryzen 5 1600 Six-Core Processor##################################
+
+tf-docker /golang/connect4-selfplay > rm db/nnForwardPassCache.db 
+tf-docker /golang/connect4-selfplay > ./humanPlay-connect4zero 
+Initializing connect4
+Initializing connect4
+Creating cache table..
+Creating cache table in : ./db/nnForwardPassCache.db
+Thinking 99.86% completeGo Zero boardIndex = 000000000000000000000000000000000000000000
+==========Go Zero==ToPlay: PLAYER_1(x)==========
+ChildNode action: 6 visit: 11 (PC:1.000000), Parent node visit: 700
+Pi[6] = 0.016381
+ChildNode action: 0 visit: 14 (PC:2.000000), Parent node visit: 700
+Pi[0] = 0.020798
+ChildNode action: 2 visit: 14 (PC:2.000000), Parent node visit: 700
+Pi[2] = 0.020798
+ChildNode action: 4 visit: 16 (PC:2.000000), Parent node visit: 700
+Pi[4] = 0.023737
+ChildNode action: 1 visit: 16 (PC:2.000000), Parent node visit: 700
+Pi[1] = 0.023737
+ChildNode action: 5 visit: 17 (PC:2.000000), Parent node visit: 700
+Pi[5] = 0.025206
+ChildNode action: 3 visit: 612 (PC:87.000000), Parent node visit: 700
+Pi[3] = 0.875461
+Pi  = [0.02079791005654456 0.023737322115832876 0.02079791005654456 0.8754610894864705 0.023737322115832876 0.025205619303789784 0.016380671412509387]
+Position win pc = -19.901505
+Cache hit PC = 56.571430
+Highest visited move from Pi: 3
+Move played by Player PLAYER_1(x) = 3
+MCTS (700) took 14.765782 long
+-----------------------------------
+Next player: PLAYER_2(o)
+ - - - - - - -
+ - - - - - - -
+ - - - - - - -
+ - - - - - - -
+ - - - - - - -
+ - - - x - - -
+-----------------------------------
+ 0 1 2 3 4 5 6
+Human move: 3
+-----------------------------------
+Next player: PLAYER_1(x)
+ - - - - - - -
+ - - - - - - -
+ - - - - - - -
+ - - - - - - -
+ - - - o - - -
+ - - - x - - -
+-----------------------------------
+ 0 1 2 3 4 5 6
+Thinking 99.86% completeGo Zero boardIndex = 000000000000000000000000000000020000001000
+==========Go Zero==ToPlay: PLAYER_1(x)==========
+ChildNode action: 6 visit: 27 (PC:3.000000), Parent node visit: 728
+Pi[6] = 0.038330
+ChildNode action: 0 visit: 30 (PC:4.000000), Parent node visit: 728
+Pi[0] = 0.042544
+ChildNode action: 1 visit: 47 (PC:6.000000), Parent node visit: 728
+Pi[1] = 0.066354
+ChildNode action: 5 visit: 71 (PC:9.000000), Parent node visit: 728
+Pi[5] = 0.099824
+ChildNode action: 2 visit: 113 (PC:15.000000), Parent node visit: 728
+Pi[2] = 0.158138
+ChildNode action: 4 visit: 118 (PC:16.000000), Parent node visit: 728
+Pi[4] = 0.165064
+ChildNode action: 3 visit: 321 (PC:44.000000), Parent node visit: 728
+Pi[3] = 0.444560
+Pi  = [0.04254416228917471 0.06635395498805598 0.1581384921659864 0.44455952174014984 0.16506428754264588 0.09982416812071665 0.038330109594030146]
+Position win pc = -8.590318
+Cache hit PC = 52.857143
+Highest visited move from Pi: 3
+Move played by Player PLAYER_1(x) = 3
+MCTS (700) took 16.137317 long
+-----------------------------------
+Next player: PLAYER_2(o)
+ - - - - - - -
+ - - - - - - -
+ - - - - - - -
+ - - - x - - -
+ - - - o - - -
+ - - - x - - -
+-----------------------------------
+ 0 1 2 3 4 5 6
+Human move: 3
+-----------------------------------
+Next player: PLAYER_1(x)
+ - - - - - - -
+ - - - - - - -
+ - - - o - - -
+ - - - x - - -
+ - - - o - - -
+ - - - x - - -
+-----------------------------------
+ 0 1 2 3 4 5 6
+Thinking 99.86% completeGo Zero boardIndex = 000000000000000002000000100000020000001000
+==========Go Zero==ToPlay: PLAYER_1(x)==========
+ChildNode action: 1 visit: 55 (PC:5.000000), Parent node visit: 928
+Pi[1] = 0.060966
+ChildNode action: 6 visit: 60 (PC:6.000000), Parent node visit: 928
+Pi[6] = 0.066450
+ChildNode action: 0 visit: 103 (PC:11.000000), Parent node visit: 928
+Pi[0] = 0.113458
+ChildNode action: 4 visit: 126 (PC:13.000000), Parent node visit: 928
+Pi[4] = 0.138514
+ChildNode action: 3 visit: 127 (PC:13.000000), Parent node visit: 928
+Pi[3] = 0.139602
+ChildNode action: 5 visit: 174 (PC:18.000000), Parent node visit: 928
+Pi[5] = 0.190665
+ChildNode action: 2 visit: 282 (PC:30.000000), Parent node visit: 928
+Pi[2] = 0.307521
+Pi  = [0.11345832193591379 0.06096584058461345 0.3075205344611844 0.13960249729735538 0.13851421439967349 0.19066512361415414 0.06645034520628264]
+Position win pc = -3.932834
+Cache hit PC = 53.658535
+Highest visited move from Pi: 2
+Move played by Player PLAYER_1(x) = 2
+MCTS (700) took 15.631653 long
+-----------------------------------
+Next player: PLAYER_2(o)
+ - - - - - - -
+ - - - - - - -
+ - - - o - - -
+ - - - x - - -
+ - - - o - - -
+ - - x x - - -
+-----------------------------------
+ 0 1 2 3 4 5 6
+Human move: 3
+-----------------------------------
+Next player: PLAYER_1(x)
+ - - - - - - -
+ - - - o - - -
+ - - - o - - -
+ - - - x - - -
+ - - - o - - -
+ - - x x - - -
+-----------------------------------
+ 0 1 2 3 4 5 6
+Thinking 99.86% completeGo Zero boardIndex = 000000000020000002000000100000020000011000
+==========Go Zero==ToPlay: PLAYER_1(x)==========
+ChildNode action: 6 visit: 3 (PC:0.000000), Parent node visit: 713
+Pi[6] = 0.004444
+ChildNode action: 1 visit: 4 (PC:0.000000), Parent node visit: 713
+Pi[1] = 0.005909
+ChildNode action: 5 visit: 4 (PC:0.000000), Parent node visit: 713
+Pi[5] = 0.005909
+ChildNode action: 2 visit: 4 (PC:0.000000), Parent node visit: 713
+Pi[2] = 0.005909
+ChildNode action: 0 visit: 4 (PC:0.000000), Parent node visit: 713
+Pi[0] = 0.005909
+ChildNode action: 3 visit: 6 (PC:0.000000), Parent node visit: 713
+Pi[3] = 0.008827
+ChildNode action: 4 visit: 687 (PC:96.000000), Parent node visit: 713
+Pi[4] = 0.963892
+Pi  = [0.005908547848312386 0.005908547848312386 0.005908547848312386 0.008826958877483103 0.9638923536836286 0.005908547848312386 0.004444177615902018]
+Position win pc = -91.398048
+Cache hit PC = 70.175438
+Highest visited move from Pi: 4
+Move played by Player PLAYER_1(x) = 4
+MCTS (700) took 0.844774 long
+-----------------------------------
+Next player: PLAYER_2(o)
+ - - - - - - -
+ - - - o - - -
+ - - - o - - -
+ - - - x - - -
+ - - - o - - -
+ - - x x x - -
+-----------------------------------
+ 0 1 2 3 4 5 6
+Human move: 5
+-----------------------------------
+Next player: PLAYER_1(x)
+ - - - - - - -
+ - - - o - - -
+ - - - o - - -
+ - - - x - - -
+ - - - o - - -
+ - - x x x o -
+-----------------------------------
+ 0 1 2 3 4 5 6
+Thinking 99.86% completeGo Zero boardIndex = 000000000020000002000000100000020000011120
+==========Go Zero==ToPlay: PLAYER_1(x)==========
+ChildNode action: 3 visit: 3 (PC:0.000000), Parent node visit: 822
+Pi[3] = 0.003860
+ChildNode action: 6 visit: 3 (PC:0.000000), Parent node visit: 822
+Pi[6] = 0.003860
+ChildNode action: 2 visit: 3 (PC:0.000000), Parent node visit: 822
+Pi[2] = 0.003860
+ChildNode action: 5 visit: 3 (PC:0.000000), Parent node visit: 822
+Pi[5] = 0.003860
+ChildNode action: 0 visit: 3 (PC:0.000000), Parent node visit: 822
+Pi[0] = 0.003860
+ChildNode action: 4 visit: 3 (PC:0.000000), Parent node visit: 822
+Pi[4] = 0.003860
+ChildNode action: 1 visit: 803 (PC:97.000000), Parent node visit: 822
+Pi[1] = 0.977114
+Pi  = [0.0038603523189773272 0.9771141228450816 0.0038603523189773272 0.0038603523189773272 0.0038603523189773272 0.0038603523189773272 0.0038603523189773272]
+Position win pc = -97.716103
+Cache hit PC = 0.000000
+Highest visited move from Pi: 1
+Move played by Player PLAYER_1(x) = 1
+MCTS (700) took 0.574930 long
+-----------------------------------
+Next player: PLAYER_2(o)
+ - - - - - - -
+ - - - o - - -
+ - - - o - - -
+ - - - x - - -
+ - - - o - - -
+ - x x x x o -
+-----------------------------------
+ 0 1 2 3 4 5 6
+GAME OVER
+Syncing in memory cache to file
+Syncing cache to file
+
+#################################### AMD Ryzen 7 3700X 8-Core Processor ########################################################## 
+tf-docker /golang/connect4-selfplay > rm db/nnForwardPassCache.db 
+tf-docker /golang/connect4-selfplay > ./humanPlay-connect4zero 
+Initializing connect4
+Initializing connect4
+Creating cache table..
+Creating cache table in : ./db/nnForwardPassCache.db
+Thinking 99.86% completeGo Zero boardIndex = 000000000000000000000000000000000000000000
+==========Go Zero==ToPlay: PLAYER_1(x)==========
+ChildNode action: 6 visit: 11 (PC:1.000000), Parent node visit: 700
+Pi[6] = 0.016381
+ChildNode action: 0 visit: 14 (PC:2.000000), Parent node visit: 700
+Pi[0] = 0.020798
+ChildNode action: 2 visit: 14 (PC:2.000000), Parent node visit: 700
+Pi[2] = 0.020798
+ChildNode action: 4 visit: 16 (PC:2.000000), Parent node visit: 700
+Pi[4] = 0.023737
+ChildNode action: 1 visit: 16 (PC:2.000000), Parent node visit: 700
+Pi[1] = 0.023737
+ChildNode action: 5 visit: 17 (PC:2.000000), Parent node visit: 700
+Pi[5] = 0.025206
+ChildNode action: 3 visit: 612 (PC:87.000000), Parent node visit: 700
+Pi[3] = 0.875461
+Pi  = [0.02079791005654456 0.023737322115832876 0.02079791005654456 0.8754610894864705 0.023737322115832876 0.025205619303789784 0.016380671412509387]
+Position win pc = -19.901505
+Cache hit PC = 56.571430
+Highest visited move from Pi: 3
+Move played by Player PLAYER_1(x) = 3
+MCTS (700) took 9.248811 long
+-----------------------------------
+Next player: PLAYER_2(o)
+ - - - - - - -
+ - - - - - - -
+ - - - - - - -
+ - - - - - - -
+ - - - - - - -
+ - - - x - - -
+-----------------------------------
+ 0 1 2 3 4 5 6
+Human move: 3
+-----------------------------------
+Next player: PLAYER_1(x)
+ - - - - - - -
+ - - - - - - -
+ - - - - - - -
+ - - - - - - -
+ - - - o - - -
+ - - - x - - -
+-----------------------------------
+ 0 1 2 3 4 5 6
+Thinking 99.86% completeGo Zero boardIndex = 000000000000000000000000000000020000001000
+==========Go Zero==ToPlay: PLAYER_1(x)==========
+ChildNode action: 6 visit: 27 (PC:3.000000), Parent node visit: 728
+Pi[6] = 0.038330
+ChildNode action: 0 visit: 30 (PC:4.000000), Parent node visit: 728
+Pi[0] = 0.042544
+ChildNode action: 1 visit: 47 (PC:6.000000), Parent node visit: 728
+Pi[1] = 0.066354
+ChildNode action: 5 visit: 71 (PC:9.000000), Parent node visit: 728
+Pi[5] = 0.099824
+ChildNode action: 2 visit: 113 (PC:15.000000), Parent node visit: 728
+Pi[2] = 0.158138
+ChildNode action: 4 visit: 118 (PC:16.000000), Parent node visit: 728
+Pi[4] = 0.165064
+ChildNode action: 3 visit: 321 (PC:44.000000), Parent node visit: 728
+Pi[3] = 0.444560
+Pi  = [0.04254416228917471 0.06635395498805598 0.1581384921659864 0.44455952174014984 0.16506428754264588 0.09982416812071665 0.038330109594030146]
+Position win pc = -8.590318
+Cache hit PC = 52.857143
+Highest visited move from Pi: 3
+Move played by Player PLAYER_1(x) = 3
+MCTS (700) took 10.013715 long
+-----------------------------------
+Next player: PLAYER_2(o)
+ - - - - - - -
+ - - - - - - -
+ - - - - - - -
+ - - - x - - -
+ - - - o - - -
+ - - - x - - -
+-----------------------------------
+ 0 1 2 3 4 5 6
+Human move: 3
+-----------------------------------
+Next player: PLAYER_1(x)
+ - - - - - - -
+ - - - - - - -
+ - - - o - - -
+ - - - x - - -
+ - - - o - - -
+ - - - x - - -
+-----------------------------------
+ 0 1 2 3 4 5 6
+Thinking 99.86% completeGo Zero boardIndex = 000000000000000002000000100000020000001000
+==========Go Zero==ToPlay: PLAYER_1(x)==========
+ChildNode action: 1 visit: 55 (PC:5.000000), Parent node visit: 928
+Pi[1] = 0.060966
+ChildNode action: 6 visit: 60 (PC:6.000000), Parent node visit: 928
+Pi[6] = 0.066450
+ChildNode action: 0 visit: 103 (PC:11.000000), Parent node visit: 928
+Pi[0] = 0.113458
+ChildNode action: 4 visit: 126 (PC:13.000000), Parent node visit: 928
+Pi[4] = 0.138514
+ChildNode action: 3 visit: 127 (PC:13.000000), Parent node visit: 928
+Pi[3] = 0.139602
+ChildNode action: 5 visit: 174 (PC:18.000000), Parent node visit: 928
+Pi[5] = 0.190665
+ChildNode action: 2 visit: 282 (PC:30.000000), Parent node visit: 928
+Pi[2] = 0.307521
+Pi  = [0.11345832193591379 0.06096584058461345 0.3075205344611844 0.13960249729735538 0.13851421439967349 0.19066512361415414 0.06645034520628264]
+Position win pc = -3.932834
+Cache hit PC = 53.658535
+Highest visited move from Pi: 2
+Move played by Player PLAYER_1(x) = 2
+MCTS (700) took 9.641065 long
+-----------------------------------
+Next player: PLAYER_2(o)
+ - - - - - - -
+ - - - - - - -
+ - - - o - - -
+ - - - x - - -
+ - - - o - - -
+ - - x x - - -
+-----------------------------------
+ 0 1 2 3 4 5 6
+Human move: 3
+-----------------------------------
+Next player: PLAYER_1(x)
+ - - - - - - -
+ - - - o - - -
+ - - - o - - -
+ - - - x - - -
+ - - - o - - -
+ - - x x - - -
+-----------------------------------
+ 0 1 2 3 4 5 6
+Thinking 99.86% completeGo Zero boardIndex = 000000000020000002000000100000020000011000
+==========Go Zero==ToPlay: PLAYER_1(x)==========
+ChildNode action: 6 visit: 3 (PC:0.000000), Parent node visit: 713
+Pi[6] = 0.004444
+ChildNode action: 1 visit: 4 (PC:0.000000), Parent node visit: 713
+Pi[1] = 0.005909
+ChildNode action: 5 visit: 4 (PC:0.000000), Parent node visit: 713
+Pi[5] = 0.005909
+ChildNode action: 2 visit: 4 (PC:0.000000), Parent node visit: 713
+Pi[2] = 0.005909
+ChildNode action: 0 visit: 4 (PC:0.000000), Parent node visit: 713
+Pi[0] = 0.005909
+ChildNode action: 3 visit: 6 (PC:0.000000), Parent node visit: 713
+Pi[3] = 0.008827
+ChildNode action: 4 visit: 687 (PC:96.000000), Parent node visit: 713
+Pi[4] = 0.963892
+Pi  = [0.005908547848312386 0.005908547848312386 0.005908547848312386 0.008826958877483103 0.9638923536836286 0.005908547848312386 0.004444177615902018]
+Position win pc = -91.398048
+Cache hit PC = 70.175438
+Highest visited move from Pi: 4
+Move played by Player PLAYER_1(x) = 4
+MCTS (700) took 0.544479 long
+-----------------------------------
+Next player: PLAYER_2(o)
+ - - - - - - -
+ - - - o - - -
+ - - - o - - -
+ - - - x - - -
+ - - - o - - -
+ - - x x x - -
+-----------------------------------
+ 0 1 2 3 4 5 6
+Human move: 5
+-----------------------------------
+Next player: PLAYER_1(x)
+ - - - - - - -
+ - - - o - - -
+ - - - o - - -
+ - - - x - - -
+ - - - o - - -
+ - - x x x o -
+-----------------------------------
+ 0 1 2 3 4 5 6
+Thinking 99.86% completeGo Zero boardIndex = 000000000020000002000000100000020000011120
+==========Go Zero==ToPlay: PLAYER_1(x)==========
+ChildNode action: 3 visit: 3 (PC:0.000000), Parent node visit: 822
+Pi[3] = 0.003860
+ChildNode action: 6 visit: 3 (PC:0.000000), Parent node visit: 822
+Pi[6] = 0.003860
+ChildNode action: 2 visit: 3 (PC:0.000000), Parent node visit: 822
+Pi[2] = 0.003860
+ChildNode action: 5 visit: 3 (PC:0.000000), Parent node visit: 822
+Pi[5] = 0.003860
+ChildNode action: 0 visit: 3 (PC:0.000000), Parent node visit: 822
+Pi[0] = 0.003860
+ChildNode action: 4 visit: 3 (PC:0.000000), Parent node visit: 822
+Pi[4] = 0.003860
+ChildNode action: 1 visit: 803 (PC:97.000000), Parent node visit: 822
+Pi[1] = 0.977114
+Pi  = [0.0038603523189773272 0.9771141228450816 0.0038603523189773272 0.0038603523189773272 0.0038603523189773272 0.0038603523189773272 0.0038603523189773272]
+Position win pc = -97.716103
+Cache hit PC = 0.000000
+Highest visited move from Pi: 1
+Move played by Player PLAYER_1(x) = 1
+MCTS (700) took 0.372937 long
+-----------------------------------
+Next player: PLAYER_2(o)
+ - - - - - - -
+ - - - o - - -
+ - - - o - - -
+ - - - x - - -
+ - - - o - - -
+ - x x x x o -
+-----------------------------------
+ 0 1 2 3 4 5 6
+GAME OVER
+Syncing in memory cache to file
+Syncing cache to file

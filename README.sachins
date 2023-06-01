@@ -1,5 +1,0 @@
-Generate protocol specific golang files:
-protoc --go_out=plugins=grpc:. src/proto/nnService.proto
-
-Analysis:
-Looks like SQL is taking a lot of time, is it worth it dig further?

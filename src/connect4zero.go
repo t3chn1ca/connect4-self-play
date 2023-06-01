@@ -39,27 +39,27 @@ import (
 //On average there are 23 moves in connect-4 (ref:reddit.com/r/math/comments/1lo4od/how_many_games_of_connect4_there_are/)
 //Create a randomizer which picks random moves in the first 25% (5.75) of the moves
 
-const MAX_MCTS_ITERATIONS = 2000
+const MAX_MCTS_ITERATIONS = 1200
 
 const END_UID_INDEX = -1
 
-//Sample moves propablistically instead of picking best move
+// Sample moves propablistically instead of picking best move
 const PROPABLISTIC_SAMPLING_FALSE = false
 const PROPABLISTIC_SAMPLING_TRUE = true
 const PICK_BEST_MOVE_TRUE = false
 
-//Do a search with traditional MCTS instead of using a backend nn
+// Do a search with traditional MCTS instead of using a backend nn
 const MCTS_TREE_SEARCH_TRUE = true
 const MCTS_TREE_SEARCH_FALSE = false
 const NN_TREE_SEARCH_TRUE = false
 
-const TRAINING_GAMES = 1000
+const TRAINING_GAMES = 300
 
-//Debugs enabled
+// Debugs enabled
 const DEBUGS_TRUE = true
 const DEBUGS_FALSE = false
 
-//First moves are randomized to create a rich set of diverse games for training, else the games are repetetive due to the NN always responding the same way
+// First moves are randomized to create a rich set of diverse games for training, else the games are repetetive due to the NN always responding the same way
 var QUARTER_OF_AVG_MOVES = 1 //Disable random first moves with -1 after some training
 
 func initLogging() {
@@ -76,7 +76,7 @@ func main() {
 	//defer profile.Start().Stop()
 	rand.Seed(int64(api.Seed_for_rand))
 	var database db.Database
-	database.CreateTable("mctsWithQVal_dec_20_2022")
+	database.CreateTable("mctsWithQVal_dec_31_2022")
 
 	var selectedChild *api.Node
 	var currRootNode *api.Node
@@ -93,7 +93,7 @@ func main() {
 		log.Printf("LastUid= %d\n", lastUid)
 		var game = api.NewConnect4()
 		//Run MCTS first time to create root node and discard results of search , ie the selected child
-		selectedChild = api.MonteCarloTreeSearch(MCTS_TREE_SEARCH_TRUE, PROPABLISTIC_SAMPLING_FALSE, game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, selectedChild, DEBUGS_FALSE)
+		selectedChild = api.MonteCarloTreeSearch(NN_TREE_SEARCH_TRUE, PROPABLISTIC_SAMPLING_TRUE, game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, selectedChild, DEBUGS_FALSE)
 		//Make a copy of root node for caching, the idea being to pass the existing MCTS back for further iterations
 		mctsRootNode = selectedChild.GetParent()
 		//Set selectedChild to mctsRootNode so that an gameIteration can start from root
@@ -105,7 +105,7 @@ func main() {
 
 			for {
 				currRootNode = selectedChild
-				selectedChild = api.MonteCarloTreeSearch(MCTS_TREE_SEARCH_TRUE, PROPABLISTIC_SAMPLING_FALSE, game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, currRootNode, DEBUGS_FALSE)
+				selectedChild = api.MonteCarloTreeSearch(NN_TREE_SEARCH_TRUE, PROPABLISTIC_SAMPLING_TRUE, game, MAX_MCTS_ITERATIONS, api.TRAIN_SERVER_PORT, currRootNode, DEBUGS_FALSE)
 				//Check we are 1/4 through the game for both players if not pick random
 				if move < QUARTER_OF_AVG_MOVES*2 {
 					//Let MCTS create child nodes before random selection
@@ -132,13 +132,17 @@ func main() {
 
 				if game.IsGameOver() {
 					database.UpdateWinner(lastUid, gameIteration, game.PlayerToString(game.GetPlayerWhoJustMoved()))
-					api.MonteCarloCacheSyncToFile()
 					println("GAME OVER")
 					game.DumpBoard()
 					selectedChild = mctsRootNode
 					break
 				}
 
+			}
+			//Game over
+			if gameIteration%10 == 0 {
+				//Only sync once in 10 games
+				api.MonteCarloCacheSyncToFile()
 			}
 		}
 
